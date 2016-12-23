@@ -11,6 +11,6 @@ http://cholla.mmto.org/orange_pi/
 
 If you want to follow my work in order, take them like this:
 
-hello - first output to the serial port
-blink - blink both on board LED's
-core - get a second CPU core to fire up
+1. hello - first output to the serial port
+2. blink - blink both on board LED's
+3. core - get a second CPU core to fire up

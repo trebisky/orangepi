@@ -1,5 +1,5 @@
 /* Simple program to spit out something on the Orange Pi PC console uart
- * Also blinks the LED !!
+ * Also blinks both onboard LED's !!
  * Tom Trebisky  12-22-2016
  */
 

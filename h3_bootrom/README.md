@@ -17,3 +17,9 @@ The ROM is 32K bytes at address 0xffff0000.
 
 I read out 64K and discovered that the second 32K
 was an exact repeat of the first 32K.
+
+As a bonus, I include the "odx" program.  This is my own
+augmented version of the od -x program that does byte order
+exactly as per the order in the file and adds ascii translation
+on the right side.  I find this invaluable when doing this
+kind of study.

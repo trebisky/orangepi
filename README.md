@@ -13,4 +13,4 @@ If you want to follow my work in order, take them like this:
 
 1. hello - first output to the serial port
 2. blink - blink both on board LED's
-3. core - get a second CPU core to fire up
+3. cores - get a second CPU core to fire up

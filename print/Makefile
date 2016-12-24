@@ -1,3 +1,4 @@
+# makefile
 CROSS = arm-linux-gnu-
 
 CC = $(CROSS)gcc

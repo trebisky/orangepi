@@ -3,21 +3,6 @@
  * Tom Trebisky  12-22-2016
  */
 
-void main ( void );
-
-/* Since we don't have an assembly language startup or a clever LDS script,
- * we rely on this being at the start of the linked code and being
- * the first thing executed.  Note that we simply use the stack handed
- * to us by U-Boot.
- */
-void
-start_me ( void )
-{
-	main ();
-}
-
-/* ---------------------- */
-
 #define GPIO_A    0
 #define GPIO_B    1
 #define GPIO_C    2
@@ -261,22 +246,41 @@ delay_x ( void )
 	    ;
 }
 
+/* Blink red status light */
 void
-blink ( void )
+blink_red ( void )
 {
-	led_init ();
-
 	for ( ;; ) {
-	    led_off ();
 	    status_on ();
-	    // uart_puts("OFF\n");
 	    delay_x ();
-	    led_on ();
+
 	    status_off ();
-	    // uart_puts("ON\n");
 	    delay_x ();
 	}
+}
 
+void
+blink_red2 ( void )
+{
+	for ( ;; ) {
+	    red_on ();
+	    delay_asm ();
+
+	    red_off ();
+	    delay_asm ();
+	}
+}
+
+void
+blink_green ( void )
+{
+	for ( ;; ) {
+	    led_off ();
+	    delay_x ();
+
+	    led_on ();
+	    delay_x ();
+	}
 }
 
 /* ========================================= */
@@ -305,14 +309,25 @@ launch ( vfptr who )
 	(*who) ();
 }
 
+static vfptr bounce;
+
+void
+bounce_core ( void )
+{
+	(*bounce) ();
+}
+
+extern void new_core ( void );
+
 void
 launch_core ( int cpu, vfptr who )
 {
 	unsigned long *reset; 
 
 	reset = (unsigned long *) ( CPUCFG_BASE + (cpu+1) * 0x40);
+	bounce = who;
 
-	*ROM_START = (unsigned long) who;
+	*ROM_START = (unsigned long) new_core;
 
 	*reset = 0;			/* put core into reset */
 	*GEN_CTRL &= ~(1<<cpu);		/* reset L1 cache */
@@ -325,19 +340,23 @@ void
 main ( void )
 {
 	uart_init();
+	led_init ();
 
 	uart_puts("\n" );
 	uart_puts("Eat more fish!\n");
 
-	// launch ( blink );
-	launch_core ( 1, blink );
+	// launch ( blink_red );
+	launch_core ( 1, blink_red );
+	uart_puts(".... Blinking\n");
+	// blink_asm ();
+	// blink_red2 ();
+	blink_green ();
 
 	uart_puts(" .. Spinning\n");
 
 	/* spin */
 	for ( ;; )
 	    ;
-
 }
 
 /* THE END */

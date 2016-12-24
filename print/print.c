@@ -63,6 +63,35 @@ blink ( void )
 
 }
 
+#define ROM_START       ((unsigned long *) 0x01f01da4)
+
+void
+show_stuff ( void )
+{
+	unsigned long id;
+	unsigned long sp;
+
+	id = 1<<31;
+	printf ( "test: %08x\n", id );
+	id = 0xdeadbeef;
+	printf ( "test: %08x\n", id );
+
+        asm volatile("add %0, sp, #0" : "=r" (sp));
+	printf ( "sp: %08x\n", sp );
+
+        asm volatile("mrc p15, 0, %0, c0, c0, 0" : "=r" (id));
+
+	printf ( "ARM id register: %08x\n", id );
+
+	id = *ROM_START;
+	printf ( "rom before: %08x\n", id );
+
+	*ROM_START = (unsigned long) blink;
+
+	id = *ROM_START;
+	printf ( "rom after: %08x\n", id );
+}
+
 void
 main ( void )
 {
@@ -72,6 +101,7 @@ main ( void )
 	// uart_puts("Eat more fish!\n");
 	printf ("Eat more fish!\n");
 
+	show_stuff ();
 
 	// launch ( blink );
 	// launch_core ( 1, blink );

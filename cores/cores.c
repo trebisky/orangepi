@@ -290,8 +290,8 @@ delay_ms ( int msecs )
 	    ;
 }
 
-#define CPUCFG_BASE 0x01f01c00
-#define PRCM_BASE   0x01f01400
+#define CPUCFG_BASE 	0x01f01c00
+#define PRCM_BASE   	0x01f01400
 
 #define ROM_START	((unsigned long *) 0x01f01da4)
 #define GEN_CTRL	((unsigned long *) 0x01f01d84)

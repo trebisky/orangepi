@@ -1,0 +1,5 @@
+*.o
+*.bin
+*.elf
+*.dump
+*.swp

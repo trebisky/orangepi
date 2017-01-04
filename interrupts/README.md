@@ -1,2 +1,3 @@
-Partition my demo into multiple files and pull in a
-printf from Kyu.
+The goal here is to write some code that will make
+interrupts (most likely timer interrupts) work on
+the Allwinner H3 using the ARM GIC.

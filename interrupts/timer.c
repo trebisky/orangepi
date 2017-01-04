@@ -3,6 +3,8 @@
  * Tom Trebisky  12-30-2016
  */
 
+void printf ( char *, ... );
+
 struct h3_timer {
 	volatile unsigned int irq_ena;		/* 00 */
 	volatile unsigned int irq_status;	/* 04 */
@@ -35,6 +37,9 @@ struct h3_timer {
 #define	CTL_SINGLE		0x80
 #define	CTL_AUTO		0x00
 
+#define IRQ_T0			0x01
+#define IRQ_T1			0x02
+
 /* The timer is a down counter,
  *  intended to generate periodic interrupts
  * There are two of these.
@@ -49,24 +54,6 @@ struct h3_timer {
  *  Foggy documentation at best.
  * 24 bits can hold values up to 16,777,215
  */
-void
-timer_init ( void )
-{
-	struct h3_timer *hp = TIMER_BASE;
-
-	// hp->t0_ival = 0x00100000;
-	hp->t0_ival = 0x80000000;
-
-	hp->t0_ctrl = CTL_SRC_24M;
-	hp->t0_ctrl |= CTL_RELOAD;
-	while ( hp->t0_ctrl & CTL_RELOAD )
-	    ;
-	hp->t0_ctrl |= CTL_ENABLE;
-
-	printf ("  Timer I val: %08x\n", hp->t0_ival );
-	printf ("  Timer C val: %08x\n", hp->t0_cval );
-	printf ("  Timer C val: %08x\n", hp->t0_cval );
-}
 
 /* All indications are that this is a 32 bit counter running
  *  -- at 30,384 Hz when we ask for 32K
@@ -75,23 +62,67 @@ timer_init ( void )
  *   actual fact we are using the same crystal to run
  *   the CPU so this is meaningless.
  */
+
+#define CLOCK_24M	24000000
+
+void
+timer_init ( int hz )
+{
+	struct h3_timer *hp = TIMER_BASE;
+
+	// hp->t0_ival = 0x00100000;
+	// hp->t0_ival = 0x80000000;
+	hp->t0_ival = CLOCK_24M / hz;
+
+	hp->t0_ctrl = CTL_SRC_24M;
+	hp->t0_ctrl |= CTL_RELOAD;
+	while ( hp->t0_ctrl & CTL_RELOAD )
+	    ;
+	hp->t0_ctrl |= CTL_ENABLE;
+
+	hp->irq_ena = IRQ_T0;
+
+	/*
+	printf ("  Timer I val: %08x\n", hp->t0_ival );
+	printf ("  Timer C val: %08x\n", hp->t0_cval );
+	printf ("  Timer C val: %08x\n", hp->t0_cval );
+	*/
+}
+
+void
+timer_ack ( void )
+{
+	struct h3_timer *hp = TIMER_BASE;
+
+	hp->irq_status = IRQ_T0;
+}
+
 void
 timer_watch ( void )
 {
 	struct h3_timer *hp = TIMER_BASE;
-	int i;
 	int val;
 	int last;
 	int del;
 
 	val = hp->t0_cval;
 
-	for ( i=0; i<10; i++ ) {
+	for ( ;; ) {
 	    last = val;
 	    val = hp->t0_cval;
+	    /*
 	    del = last - val;
 	    printf ("  Timer: 0x%08x %d = %d\n", val, val, del );
-	    ms_delay ( 1000 );
+	    */
+	    printf ("  Timer: 0x%08x %d = %08x\n", val, val, hp->irq_status );
+	    /*
+	    if ( hp->irq_status )
+		timer_ack ();
+	    printf (" =Timer: 0x%08x %d = %08x\n", val, val, hp->irq_status );
+	    */
+	    // gig_delay ( 2 );
+	    ms_delay ( 2000 );
 	}
 }
+
 /* THE END */

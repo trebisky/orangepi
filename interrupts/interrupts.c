@@ -180,7 +180,7 @@ ccnt_read ( void )
 #define MEG	1000000
 
 void
-gig_delay ( void )
+gig_delayX ( void )
 {
 	int count;
 
@@ -195,16 +195,31 @@ gig_delay ( void )
 
 /* OK for up to 16 seconds at 1 Ghz clock */
 void
-ms_delay ( int ms )
+gig_delay ( int secs )
 {
-	int target = ms * MEG;
 	int count;
+	int limit = secs * GIG;
 
 	ccnt_reset ();
 
 	for ( ;; ) {
 	    asm volatile ("mrc p15, 0, %0, c9, c13, 0" : "=r"(count) );
-	    if ( count >= target )
+	    if ( count > limit )
+		break;
+	}
+}
+
+void
+ms_delay ( int ms )
+{
+	int count;
+	int limit = ms * MEG;
+
+	ccnt_reset ();
+
+	for ( ;; ) {
+	    asm volatile ("mrc p15, 0, %0, c9, c13, 0" : "=r"(count) );
+	    if ( count > limit )
 		break;
 	}
 }
@@ -218,8 +233,11 @@ spin ( void )
 
 /* --------------------------------------- */
 
-void timer_init ( void );
+void timer_init ( int );
 void timer_watch ( void );
+void gic_watch ( void );
+
+void gic_init ( void );
 
 void
 main ( void )
@@ -238,12 +256,13 @@ main ( void )
 
 	status_on ();
 
+	ccnt_enable ( 0 );
+	ccnt_reset ();
+
+#ifdef notdef
 	/* Read SCR (secure config register) */
 	asm volatile ("mrc p15, 0, %0, c1, c1, 0" : "=r"(val) );
 	printf ( " SCR = %08x\n", val );
-
-	ccnt_enable ( 0 );
-	ccnt_reset ();
 
 	printf ( " CCNT = %08x\n", ccnt_read() );
 	printf ( " CCNT = %08x\n", ccnt_read() );
@@ -254,38 +273,21 @@ main ( void )
 	// launch ( blink );
 	// launch_core ( 1, blink );
 	// blink ();
-
-#ifdef notdef
-	/* Stopwatch shows that this yields exactly a 10 second delay,
-	   so the processor (as handed to use by U-Boot) is running
-	   at 1.0 Ghz
-	 */
-	printf ( "Start\n" );
-	for ( val=0; val<10; val++ )
-	    gig_delay ();
-	printf ( " ...... DONE\n" );
 #endif
 
-	timer_init ();
-	timer_watch ();
+	gic_init ();
+
+	timer_init ( 10 );
+
+	// timer_watch ();
+	gic_watch ();
+
+	/*
+	uart_puts(" .. Spinning\n");
 	spin ();
+	*/
 
 #ifdef notdef
-	/* The game here is to calibrate my silly delay_x() function.
-	 * It turns out it gives a 300 ms delay.
-	 */
-	for ( ;; ) {
-	    ccnt_reset ();
-	    delay_x ();
-	    asm volatile ("mrc p15, 0, %0, c9, c13, 0" : "=r"(count1) );
-	    printf ( " Count: (%d) %d %08x\n", tick++, count1, count1 );
-	    msecs = count1 / MEG;
-	    printf ( " Milliseconds: %d\n", msecs );
-	}
-#endif
-
-	spin ();
-
 	for ( ;; ) {
 	    delay_x ();
 	    ccnt_reset ();
@@ -305,12 +307,7 @@ main ( void )
 	    printf ( " Count+ (%d) %d %08x\n", tick++, count2, count2 );
 	}
 
-	uart_puts(" .. Spinning\n");
-
-	/* spin */
-	for ( ;; )
-	    ;
-
+#endif
 }
 
 /* THE END */

@@ -15,3 +15,5 @@ If you want to follow my work in order, take them like this:
 2. blink - blink both on board LED's
 3. cores - get a second CPU core to fire up (not yet working)
 4. print - partition files and add a printf
+5. timer - get a timer running (but not yet interrupting)
+4. interrupts - set up the GIC so we get timer interrupts.

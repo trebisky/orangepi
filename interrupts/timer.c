@@ -5,6 +5,8 @@
 
 void printf ( char *, ... );
 
+int timer_count = 0;
+
 struct h3_timer {
 	volatile unsigned int irq_ena;		/* 00 */
 	volatile unsigned int irq_status;	/* 04 */
@@ -95,6 +97,14 @@ timer_ack ( void )
 	struct h3_timer *hp = TIMER_BASE;
 
 	hp->irq_status = IRQ_T0;
+}
+
+/* Called at interrupt level */
+void
+timer_handler ( void )
+{
+	timer_count++;
+	timer_ack ();
 }
 
 void

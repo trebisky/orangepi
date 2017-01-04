@@ -107,6 +107,21 @@ gic_unpend ( int irq )
 	gp->pclear[x] = mask;
 }
 
+void
+gic_handler ( void )
+{
+	struct h3_gic_cpu *cp = GIC_CPU_BASE;
+	int irq;
+
+	irq = cp->iack;
+	printf ( "GIC iack = %08x\n", irq );
+	if ( irq == 1023 )
+	    return;
+	if ( irq == IRQ_TIMER0 )
+	    timer_handler ();
+	cp->eoi = irq;
+	// gic_unpend ( IRQ_TIMER0 );
+}
 
 void
 gic_init ( void )
@@ -165,16 +180,22 @@ gic_init ( void )
 	cp->ctrl = 1;
 }
 
+extern int timer_count;
+
+#define HACK_MASK	0x40000
+
 void
 gic_watch ( void )
 {
 	struct h3_gic_dist *gp = GIC_DIST_BASE;
 
 	for ( ;; ) {
-	    ms_delay ( 2000 );
-	    printf ( " GIC pending: %08x %08x\n", gp->pset[0], gp->pset[1] );
-	    gic_unpend ( IRQ_TIMER0 );
-	    printf ( "+GIC pending: %08x %08x\n", gp->pset[0], gp->pset[1] );
+	    // ms_delay ( 2000 );
+	    if ( gp->pset[1] & HACK_MASK ) {
+		printf ( " GIC pending: %08x %08x %d\n", gp->pset[0], gp->pset[1], timer_count );
+		gic_handler ();
+		printf ( "+GIC pending: %08x %08x %d\n", gp->pset[0], gp->pset[1], timer_count );
+	    }
 	}
 }
 

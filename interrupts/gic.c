@@ -114,13 +114,25 @@ gic_handler ( void )
 	int irq;
 
 	irq = cp->iack;
-	printf ( "GIC iack = %08x\n", irq );
-	if ( irq == 1023 )
-	    return;
+
+	/* Do we need to EOI the spurious ? */
+	if ( irq == 1023 ) {
+	    uart_putc ( 'X' );
+	    uart_putc ( '\n' );
+	    // return;
+	}
+
 	if ( irq == IRQ_TIMER0 )
 	    timer_handler ();
+
 	cp->eoi = irq;
-	// gic_unpend ( IRQ_TIMER0 );
+	gic_unpend ( IRQ_TIMER0 );
+
+	// uart_putc ( '.' );
+	// uart_putc ( '\n' );
+
+	// printf ( "GIC iack = %08x\n", irq );
+	// ms_delay ( 200 );
 }
 
 void
@@ -131,6 +143,7 @@ gic_init ( void )
 	unsigned long *p;
 	int i;
 
+#ifdef notdef
 	p = (unsigned long *) & gp->target;
 	printf ( "GIC target = %08x\n", p );
 	p = (unsigned long *) & gp->config;
@@ -142,6 +155,7 @@ gic_init ( void )
 	 * The 43B part is correct for ARM.
 	printf ( "GIC iidr = %08x\n", gp->iidr );
 	 */
+#endif
 
 	/* Initialize the distributor */
 	gp->ctrl = 0;
@@ -158,6 +172,9 @@ gic_init ( void )
 
 	for ( i=1; i<NUM_MASK; i++ )
 	    gp->eclear[i] = 0xffffffff;
+
+	for ( i=0; i<NUM_MASK; i++ )
+	    gp->pclear[i] = 0xffffffff;
 
 	gic_enable ( IRQ_TIMER0 );
 
@@ -180,22 +197,42 @@ gic_init ( void )
 	cp->ctrl = 1;
 }
 
-extern int timer_count;
+extern volatile int timer_count;
 
-#define HACK_MASK	0x40000
+/* This is TIMER 0 */
+#define TIMER_MASK	0x40000
 
 void
-gic_watch ( void )
+gic_check ( void )
+{
+	struct h3_gic_dist *gp = GIC_DIST_BASE;
+
+	printf ( " GIC pending: %08x %08x %d\n", gp->pset[0], gp->pset[1], timer_count );
+}
+
+void
+gic_poll ( void )
 {
 	struct h3_gic_dist *gp = GIC_DIST_BASE;
 
 	for ( ;; ) {
 	    // ms_delay ( 2000 );
-	    if ( gp->pset[1] & HACK_MASK ) {
-		printf ( " GIC pending: %08x %08x %d\n", gp->pset[0], gp->pset[1], timer_count );
+	    if ( gp->pset[1] & TIMER_MASK ) {
+		gic_check ();
 		gic_handler ();
 		printf ( "+GIC pending: %08x %08x %d\n", gp->pset[0], gp->pset[1], timer_count );
 	    }
+	}
+}
+
+void
+gic_watch ( void )
+{
+
+	for ( ;; ) {
+	    delay_x ();
+	    delay_x ();
+	    gic_check ();
 	}
 }
 

@@ -1,28 +1,18 @@
-/* This is a collection of experiments pertaining to
- * delays on the Orange Pi PC.
- * Also experimenting with inline assembly,
- * as well as starting to fiddle with the timer.
+/* The game here is to get interrupts happening
+ *   on the Orange Pi PC.
  *
- * To fully utilize the timer will require getting
- *  interrupts going, which means attacking the ARM GIC device,
- *  which is no small task.
+ * This is mostly about writing a driver for the ARM GIC device.
+ * The interrupt source in question is TIMER 0, which
+ * I have running to interrupt at 10 Hz.
  *
- * Tom Trebisky  12-30-2016
+ * There is some cruft hanging around from the original
+ *  timer experiments.
+ *
+ * Tom Trebisky  1-4-2017
  */
 
 void main ( void );
 void printf ( char *, ... );
-
-/* Since we don't have an assembly language startup or a clever LDS script,
- * we rely on this being at the start of the linked code and being
- * the first thing executed.  Note that we simply use the stack handed
- * to us by U-Boot.
- */
-void
-start_me ( void )
-{
-	main ();
-}
 
 /* Something in the eabi library for gcc wants this */
 int
@@ -137,7 +127,7 @@ ccnt_enable ( int div64 )
 
         // val = get_pmcr ();
 	asm volatile ("mrc p15, 0, %0, c9, c12, 0" : "=r"(val) );
-	printf ( " PMCR = %08x\n", val );
+	// printf ( " PMCR = %08x\n", val );
         val |= PMCR_ENABLE;
         if ( div64 )
             val |= PMCR_CC_DIV;
@@ -145,14 +135,14 @@ ccnt_enable ( int div64 )
 	asm volatile ("mcr p15, 0, %0, c9, c12, 0" : : "r"(val) );
 
 	asm volatile ("mrc p15, 0, %0, c9, c12, 0" : "=r"(val) );
-	printf ( " PMCR = %08x\n", val );
+	// printf ( " PMCR = %08x\n", val );
 
         // set_cena ( CENA_CCNT );
 	val = CENA_CCNT;
 	asm volatile ("mcr p15, 0, %0, c9, c12, 1" : : "r"(val) );
 
 	asm volatile ("mrc p15, 0, %0, c9, c12, 1" : "=r"(val) );
-	printf ( " CENA = %08x\n", val );
+	// printf ( " CENA = %08x\n", val );
 }
 
 
@@ -239,6 +229,8 @@ void gic_watch ( void );
 
 void gic_init ( void );
 
+extern volatile int timer_count;
+
 void
 main ( void )
 {
@@ -247,6 +239,9 @@ main ( void )
 	int tick = 0;
 	int val;
 	int msecs;
+	int i;
+	int last_count;
+	int cur_sp;
 
 	uart_init();
 
@@ -254,7 +249,10 @@ main ( void )
 	// uart_puts("Eat more fish!\n");
 	printf ("Eat more fish!\n");
 
-	status_on ();
+	led_init ();
+	// status_on ();
+	status_off ();
+	// led_off ();
 
 	ccnt_enable ( 0 );
 	ccnt_reset ();
@@ -278,9 +276,60 @@ main ( void )
 	gic_init ();
 
 	timer_init ( 10 );
+	// timer_init ( 20 );
+	// timer_one ( 2000 );
+
+	timer_count = 0;
+	last_count = timer_count;
+
+	printf ( "Enabling IRQ\n" );
+	ms_delay ( 100 );
+
+	enable_irq ();
 
 	// timer_watch ();
-	gic_watch ();
+	// gic_watch ();
+
+	for ( ;; ) {
+	    ms_delay ( 500 );
+	    asm volatile ("add %0, sp, #0" : "=r"(cur_sp) );
+	    printf ( "Count: %5d sp = %08x\n", timer_count, cur_sp );
+	}
+
+#ifdef notdef
+	for ( ;; ) {
+	    ms_delay ( 500 );
+	    printf ( "Count: %5d\n", timer_count );
+	    /*
+	    if ( timer_count > last_count ) {
+		printf ( "Count: %5d\n", timer_count );
+	 	last_count = timer_count;
+	    }
+	    */
+	    /*
+	    if ( uart_rx_status() ) {
+		val = uart_read ();
+		printf ( "Got: %02x\n", val );
+	    }
+	    */
+	}
+#endif
+
+	for ( i=0; ; i++ ) {
+	    ms_delay ( 500 );
+	    gic_check ();
+	    // if ( timer_count > last_count ) {
+	// 	last_count = timer_count;
+	// 	timer_one ( 1200 );
+	  //   }
+	    /*
+	    uart_check ( i );
+	    if ( uart_rx_status() ) {
+		val = uart_read ();
+		printf ( "Got: %02x\n", val );
+	    }
+	    */
+	}
 
 	/*
 	uart_puts(" .. Spinning\n");

@@ -5,7 +5,7 @@
 
 void printf ( char *, ... );
 
-int timer_count = 0;
+int timer_count;
 
 struct h3_timer {
 	volatile unsigned int irq_ena;		/* 00 */
@@ -66,6 +66,7 @@ struct h3_timer {
  */
 
 #define CLOCK_24M	24000000
+#define CLOCK_24M_MS	24000
 
 void
 timer_init ( int hz )
@@ -76,13 +77,15 @@ timer_init ( int hz )
 	// hp->t0_ival = 0x80000000;
 	hp->t0_ival = CLOCK_24M / hz;
 
+	hp->t0_ctrl = 0;	/* stop the timer */
+	hp->irq_ena = IRQ_T0;
+
 	hp->t0_ctrl = CTL_SRC_24M;
 	hp->t0_ctrl |= CTL_RELOAD;
 	while ( hp->t0_ctrl & CTL_RELOAD )
 	    ;
-	hp->t0_ctrl |= CTL_ENABLE;
 
-	hp->irq_ena = IRQ_T0;
+	hp->t0_ctrl |= CTL_ENABLE;
 
 	/*
 	printf ("  Timer I val: %08x\n", hp->t0_ival );
@@ -90,6 +93,25 @@ timer_init ( int hz )
 	printf ("  Timer C val: %08x\n", hp->t0_cval );
 	*/
 }
+
+/* One shot, delay in milliseconds */
+void
+timer_one ( int delay )
+{
+	struct h3_timer *hp = TIMER_BASE;
+
+	hp->t0_ival = CLOCK_24M_MS * delay;
+
+	hp->t0_ctrl = 0;	/* stop the timer */
+	hp->irq_ena = IRQ_T0;
+
+	hp->t0_ctrl = CTL_SRC_24M | CTL_SINGLE;
+	hp->t0_ctrl |= CTL_RELOAD;
+	while ( hp->t0_ctrl & CTL_RELOAD )
+	    ;
+	hp->t0_ctrl |= CTL_ENABLE;
+}
+
 
 void
 timer_ack ( void )

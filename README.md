@@ -16,5 +16,5 @@ If you want to follow my work in order, take them like this:
 3. cores - get a second CPU core to fire up (not yet working)
 4. print - partition files and add a printf
 5. timer - get a timer running (but not yet interrupting)
-6. interrupts - set up the GIC so we get timer interrupts (has problems)
+6. inter_ez - set up the GIC so we get timer interrupts (has problems)
 7. inter_kyu - interrupts with timer and GIC with Kyu additions (works)

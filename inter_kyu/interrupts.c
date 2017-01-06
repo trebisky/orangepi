@@ -246,6 +246,7 @@ main ( void )
 	int msecs;
 	int i;
 	int last_count;
+	int cur_count;
 	int cur_sp;
 
 	init_thread ();
@@ -268,6 +269,7 @@ main ( void )
 
 	timer_init ( 10000 );
 	// timer_init ( 1000 );
+
 	// timer_one ( 2000 );
 
 	timer_count = 0;
@@ -282,9 +284,11 @@ main ( void )
 	// gic_watch ();
 
 	for ( ;; ) {
-	    ms_delay ( 500 );
+	    ms_delay ( 1000 );
 	    asm volatile ("add %0, sp, #0" : "=r"(cur_sp) );
-	    printf ( "Count: %5d sp = %08x\n", timer_count, cur_sp );
+	    cur_count = timer_count;
+	    printf ( "Count: %8d sp = %08x %6d\n", timer_count, cur_sp, cur_count-last_count );
+	    last_count = cur_count;
 	}
 }
 

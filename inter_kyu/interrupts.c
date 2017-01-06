@@ -1,6 +1,11 @@
 /* The game here is to get interrupts happening
  *   on the Orange Pi PC.
  *
+ * After pulling our hair out with a simple interrupt demo,
+ *  I just grabbed thw startup.S file from kyu and patch
+ *  in a substantial but minimal set of files, making
+ *  merciless hacks.  And it works!
+ *
  * This is mostly about writing a driver for the ARM GIC device.
  * The interrupt source in question is TIMER 0, which
  * I have running to interrupt at 10 Hz.
@@ -259,26 +264,10 @@ main ( void )
 	ccnt_enable ( 0 );
 	ccnt_reset ();
 
-#ifdef notdef
-	/* Read SCR (secure config register) */
-	asm volatile ("mrc p15, 0, %0, c1, c1, 0" : "=r"(val) );
-	printf ( " SCR = %08x\n", val );
-
-	printf ( " CCNT = %08x\n", ccnt_read() );
-	printf ( " CCNT = %08x\n", ccnt_read() );
-	printf ( " CCNT = %08x\n", ccnt_read() );
-
-	show_stuff ();
-
-	// launch ( blink );
-	// launch_core ( 1, blink );
-	// blink ();
-#endif
-
 	gic_init ();
 
-	timer_init ( 10 );
-	// timer_init ( 20 );
+	timer_init ( 10000 );
+	// timer_init ( 1000 );
 	// timer_one ( 2000 );
 
 	timer_count = 0;
@@ -297,68 +286,6 @@ main ( void )
 	    asm volatile ("add %0, sp, #0" : "=r"(cur_sp) );
 	    printf ( "Count: %5d sp = %08x\n", timer_count, cur_sp );
 	}
-
-#ifdef notdef
-	for ( ;; ) {
-	    ms_delay ( 500 );
-	    printf ( "Count: %5d\n", timer_count );
-	    /*
-	    if ( timer_count > last_count ) {
-		printf ( "Count: %5d\n", timer_count );
-	 	last_count = timer_count;
-	    }
-	    */
-	    /*
-	    if ( uart_rx_status() ) {
-		val = uart_read ();
-		printf ( "Got: %02x\n", val );
-	    }
-	    */
-	}
-#endif
-
-	for ( i=0; ; i++ ) {
-	    ms_delay ( 500 );
-	    gic_check ();
-	    // if ( timer_count > last_count ) {
-	// 	last_count = timer_count;
-	// 	timer_one ( 1200 );
-	  //   }
-	    /*
-	    uart_check ( i );
-	    if ( uart_rx_status() ) {
-		val = uart_read ();
-		printf ( "Got: %02x\n", val );
-	    }
-	    */
-	}
-
-	/*
-	uart_puts(" .. Spinning\n");
-	spin ();
-	*/
-
-#ifdef notdef
-	for ( ;; ) {
-	    delay_x ();
-	    ccnt_reset ();
-	    asm volatile ("mrc p15, 0, %0, c9, c13, 0" : "=r"(count1) );
-	    asm volatile ("mrc p15, 0, %0, c9, c13, 0" : "=r"(count2) );
-	    printf ( " Count: (%d) %d %08x\n", tick++, count1, count1 );
-	    printf ( " Count+ (%d) %d %08x\n", tick++, count2, count2 );
-	}
-
-	for ( ;; ) {
-	    // ccnt_reset ();
-	    delay_x ();
-	    delay_x ();
-	    asm volatile ("mrc p15, 0, %0, c9, c13, 0" : "=r"(count1) );
-	    asm volatile ("mrc p15, 0, %0, c9, c13, 0" : "=r"(count2) );
-	    printf ( " Count: (%d) %d %08x\n", tick++, count1, count1 );
-	    printf ( " Count+ (%d) %d %08x\n", tick++, count2, count2 );
-	}
-
-#endif
 }
 
 /* THE END */

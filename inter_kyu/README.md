@@ -12,3 +12,6 @@ interrupts on the Allwinner H3 usin the ARM GIC.
 
 This will be a useful stepping stone towards getting
 Kyu running on the Orange Pi.
+
+This code has no trouble with the timer running at
+    10,000 Hz

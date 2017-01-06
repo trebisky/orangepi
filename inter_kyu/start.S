@@ -32,8 +32,6 @@
  * For some reason the compiler was reordering routines
  * compiled from main.c, this makes us immune to that.
  */
-	.globl uboot_startup
-uboot_startup:
 	.globl kyu_startup
 kyu_startup:
 	mrs	r0, cpsr		/* disable interrupts */
@@ -46,6 +44,7 @@ kyu_startup:
 
 	bl	clear_bss
 /*	bl	kern_startup	*/
+@	bl	kern_startup
 	bl	main
 	bx	lr
 
@@ -95,8 +94,6 @@ sanity:
  */
 
 	.align  5
-@.globl _start
-@_start:
 .globl vectors
 vectors:
 	b	reset

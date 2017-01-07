@@ -38,7 +38,7 @@ TARGET = interrupts.bin
 all: install
 
 install: $(TARGET)
-	cp $(TARGET) /var/lib/tftpboot/orange
+	cp $(TARGET) /var/lib/tftpboot/orange.bin
 
 DUMP = arm-linux-gnu-objdump -d
 

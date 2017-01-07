@@ -18,3 +18,11 @@ If you want to follow my work in order, take them like this:
 5. timer - get a timer running (but not yet interrupting)
 6. inter_ez - set up the GIC so we get timer interrupts (has problems)
 7. inter_kyu - interrupts with timer and GIC with Kyu additions (works)
+
+After this, my efforts have transitioned to getting Kyu to run on
+the Orange Pi, so you should go there next.  I will probably never
+get the "inter_ez" demo to work (but you never know), and expect to
+try to push forwad the second core business with the aid of the Kyu
+infrastructure.  So this project is sort of finished (maybe).
+
+The bootrom though may get further attention.

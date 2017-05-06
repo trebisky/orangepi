@@ -16,7 +16,7 @@
  * It can switch, but watch out if you do!
  */
 
-#include "board/board.h"
+#include "board.h"
 
 @ Apparently the at-sign is the ARM comment character.
 @ on the x86 you use the pound sign.

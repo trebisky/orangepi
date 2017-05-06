@@ -78,11 +78,15 @@ void puts ( char *msg )
 	serial_puts ( msg );
 }
 
+/*
 #include "kyu.h"
 #include "thread.h"
 
-struct thread bogus_thread;
+static struct thread bogus_thread;
 struct thread *cur_thread;
+*/
+
+void *cur_thread;
 
 void do_undefined_instruction ( void ) { puts ("BAD\n"); }
 void do_software_interrupt ( void ) { puts ("BAD\n"); }
@@ -232,7 +236,8 @@ test_core ( void )
 	led_init ();
 	serial_init ( 115200 );
 	core_stacks = 0x50000000;
-	cur_thread = & bogus_thread;
+	// cur_thread = & bogus_thread;
+	cur_thread = (void *) 0x58000000;
 
 #ifdef notdef
 	asm volatile ("mrs %0, cpsr\n" : "=r"(reg) : : "cc" );

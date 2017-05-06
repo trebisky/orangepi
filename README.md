@@ -15,6 +15,7 @@ If you want to follow my work in order, take them like this:
 2. blink - blink both on board LED's
 3. cores1 - get a second CPU core to fire up (not yet working)
 3. cores2 - another attempt at a second core (not yet working)
+3. cores3 - a simple example that does work, pruned back from Kyu sources
 4. print - partition files and add a printf
 5. timer - get a timer running (but not yet interrupting)
 6. inter_ez - set up the GIC so we get timer interrupts (has problems)

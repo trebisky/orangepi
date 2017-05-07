@@ -68,25 +68,15 @@
 
 void test_core ( void );
 
-typedef void (*vfptr) ( void );
-
 // extern unsigned long core_stacks;
-unsigned long core_stacks;
+// unsigned long core_stacks;
 
 void puts ( char *msg )
 {
 	serial_puts ( msg );
 }
 
-/*
-#include "kyu.h"
-#include "thread.h"
-
-static struct thread bogus_thread;
-struct thread *cur_thread;
-*/
-
-void *cur_thread;
+// void *cur_thread;
 
 void do_undefined_instruction ( void ) { puts ("BAD\n"); }
 void do_software_interrupt ( void ) { puts ("BAD\n"); }
@@ -135,31 +125,6 @@ launch_core ( int cpu )
 
 // #define SENTINEL	ROM_START
 #define SENTINEL	(volatile unsigned long *) 4
-
-#ifdef notdef
-void
-watch_core ( void )
-{
-	volatile unsigned long *sent;
-	int i;
-
-	sent = SENTINEL;
-
-	printf ( "\n" );
-	printf ( "Sentinel addr: %08x\n", sent );
-
-	for ( i=0; i<40; i++ ) {
-	    thr_delay ( 100 );
-	    // printf ( "Core status: %08x\n", *sent );
-	    if ( *sent == 0 ) {
-		printf ( "Core started !!\n" );
-		return;
-	    }
-	}
-	printf ( "** Core failed to start\n" );
-
-}
-#endif
 
 /* Most of the time a core takes 30 counts to start */
 #define MAX_CORE	100
@@ -235,9 +200,9 @@ test_core ( void )
 
 	led_init ();
 	serial_init ( 115200 );
-	core_stacks = 0x50000000;
+	// core_stacks = 0x50000000;
 	// cur_thread = & bogus_thread;
-	cur_thread = (void *) 0x58000000;
+	// cur_thread = (void *) 0x58000000;
 
 #ifdef notdef
 	asm volatile ("mrs %0, cpsr\n" : "=r"(reg) : : "cc" );

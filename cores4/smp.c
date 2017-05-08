@@ -71,23 +71,69 @@ void test_core ( void );
 // extern unsigned long core_stacks;
 // unsigned long core_stacks;
 
-void puts ( char *msg )
-{
-	serial_puts ( msg );
-}
-
 // void *cur_thread;
-
-void do_undefined_instruction ( void ) { puts ("BAD\n"); }
-void do_software_interrupt ( void ) { puts ("BAD\n"); }
-void do_prefetch_abort ( void ) { puts ("BAD\n"); }
-void do_data_abort ( void ) { puts ("BAD\n"); }
-void do_not_used ( void ) { puts ("BAD\n"); }
-void do_irq ( void ) { puts ("BAD\n"); }
-void do_fiq ( void ) { puts ("BAD\n"); }
 
 /* This is in locore.S */
 extern void newcore ( void );
+
+/* If all goes well, when we start a new core,
+ * we will be running here,
+ * this is the first C code run by a new core.
+ */
+
+#define CORE_QUIET
+
+// #define SENTINEL	ROM_START
+#define SENTINEL	(volatile unsigned long *) 4
+
+/* This is the first C code a new core runs */
+void
+kyu_newcore ( int core )
+{
+	volatile unsigned long *sent;
+	unsigned long sp;
+	int val = 0;
+	int cpu = 99;
+
+	sent = SENTINEL;
+	*sent = 0;
+
+	/* Read processor affinity register */
+	asm volatile("mrc 15, 0, %0, cr0, cr0, 5" : "=r" (cpu) : : "cc");
+	cpu &= 0x3;
+
+	asm volatile ("add %0, sp, #0\n" :"=r"(sp));
+
+#ifndef CORE_QUIET
+	/* Makes a mess without synchronization */
+	printf ( "Core %d running with sp = %08x\n", cpu, sp );
+	printf ( "Core %d core (arg) = %08x\n", cpu, core );
+	// printf ( "Core %d running\n", cpu );
+#endif
+
+#ifdef notdef
+	for ( ;; ) {
+	    *sent = val++;
+	    delay_ms ( 1 );
+	    if ( val % 5 == 0 )
+		printf ( "Tick !!\n" );
+	    if ( *ROM_START == 0 )
+		break;
+	}
+#endif
+
+	if ( cpu == 1 )
+	    gpio_blink_red ();
+
+	for ( ;; )
+	    ;
+}
+
+static void
+puts ( char *msg )
+{
+	serial_puts ( msg );
+}
 
 /* Use for sub millisecond delays
  * argument is microseconds.
@@ -99,6 +145,23 @@ core_delay ( int n )
 
     while ( x-- > 0 )
         ;
+}
+
+/* Runs mighty slow without D cache enabled */
+static void
+delay_ms_cache ( int msecs )
+{
+        volatile int count = 100000 * msecs;
+
+        while ( count-- )
+            ;
+}
+
+static void
+delay_ms ( int msecs )
+{
+	delay_ms_cache ( msecs );
+	// delay_ms_nocache ( msecs );
 }
 
 void
@@ -122,9 +185,6 @@ launch_core ( int cpu )
 
         *reset = 3;			/* take out of reset */
 }
-
-// #define SENTINEL	ROM_START
-#define SENTINEL	(volatile unsigned long *) 4
 
 /* Most of the time a core takes 30 counts to start */
 #define MAX_CORE	100
@@ -190,6 +250,29 @@ test_reg ( volatile unsigned long *reg )
 }
 #endif
 
+/* We want to trigger some kind of fault.
+ * Amazingly, ANY address on the Orange Pi is readable.
+ */
+static void
+fail ( void )
+{
+	puts ( "Preparing to fail ...\n" );
+	/*
+	long *p = (long *) 0xa0000000;
+	*p = 0;
+	 */
+
+	// this just hangs everything ...
+	// __builtin_trap ();
+
+	// this just hangs everything too.
+	// this is supposed to be an ARM
+	// permanently defined illegal instruction encoding.
+	//    0xf7fXaXXX
+	// asm volatile (".word 0xf7f0a000\n");
+	trap_ui ();
+}
+
 /* This gets called by the test menu
  *   (or something of the sort)
  */
@@ -200,9 +283,12 @@ test_core ( void )
 
 	led_init ();
 	serial_init ( 115200 );
+
 	// core_stacks = 0x50000000;
 	// cur_thread = & bogus_thread;
 	// cur_thread = (void *) 0x58000000;
+
+	fail ();
 
 #ifdef notdef
 	asm volatile ("mrs %0, cpsr\n" : "=r"(reg) : : "cc" );
@@ -228,8 +314,8 @@ test_core ( void )
 
 	// printf ( "Address of core stacks: %08x\n", core_stacks );
 	test_one ( 1 );
-	test_one ( 2 );
-	test_one ( 3 );
+	// test_one ( 2 );
+	// test_one ( 3 );
 
 	/*
 	test_reg ( ROM_START );
@@ -238,74 +324,10 @@ test_core ( void )
 	*/
 
 	puts ( "Done\n" );
-
-}
-
-/* If all goes well, we will be running here,
- * And indeed we are, this is the first C code
- * run by a new core.
- */
-
-/* Runs mighty slow without D cache enabled */
-static void
-delay_ms_cache ( int msecs )
-{
-        volatile int count = 100000 * msecs;
-
-        while ( count-- )
-            ;
-}
-
-static void
-delay_ms ( int msecs )
-{
-	delay_ms_cache ( msecs );
-	// delay_ms_nocache ( msecs );
-}
-
-#define CORE_QUIET
-
-/* This is the first C code a new core runs */
-void
-kyu_newcore ( int core )
-{
-	volatile unsigned long *sent;
-	unsigned long sp;
-	int val = 0;
-	int cpu = 99;
-
-	sent = SENTINEL;
-	*sent = 0;
-
-	/* Read processor affinity register */
-	asm volatile("mrc 15, 0, %0, cr0, cr0, 5" : "=r" (cpu) : : "cc");
-	cpu &= 0x3;
-
-	asm volatile ("add %0, sp, #0\n" :"=r"(sp));
-
-#ifndef CORE_QUIET
-	/* Makes a mess without synchronization */
-	printf ( "Core %d running with sp = %08x\n", cpu, sp );
-	printf ( "Core %d core (arg) = %08x\n", cpu, core );
-	// printf ( "Core %d running\n", cpu );
-#endif
-
-#ifdef notdef
-	for ( ;; ) {
-	    *sent = val++;
-	    delay_ms ( 1 );
-	    if ( val % 5 == 0 )
-		printf ( "Tick !!\n" );
-	    if ( *ROM_START == 0 )
-		break;
-	}
-#endif
-
-	if ( cpu == 1 )
-	    gpio_blink_red ();
-
-	for ( ;; )
-	    ;
+	delay_ms ( 1000 );
+	puts ( "Done\n" );
+	delay_ms ( 1000 );
+	puts ( "Done\n" );
 }
 
 /* THE END */

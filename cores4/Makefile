@@ -11,9 +11,10 @@ all: core
 # ------------------------ core 3 stuff
 
 COBJS =  locore.o \
+    smp.o \
+    traps.o \
     orange_pi/gpio.o \
-    orange_pi/serial.o \
-    smp.o
+    orange_pi/serial.o
 
 core: $(COBJS)
 	$(LD) -g -T kyu.lds -e asm_startup -o core.elf $(COBJS) $(LIBS)

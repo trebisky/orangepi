@@ -130,12 +130,26 @@ reset:
 
 	.align  5
 undefined_instruction:
+	bl trap_ui
+	b  vspin
 software_interrupt:
+	bl trap_si
+	b  vspin
 prefetch_abort:
+	bl trap_pa
+	b  vspin
 data_abort:
+	bl trap_da
+	b  vspin
 not_used:
+	bl trap_nu
+	b  vspin
 irq:
+	bl trap_irq
+	b  vspin
 fiq:
+	bl trap_fiq
+	b  vspin
 
 vspin:	b	vspin
 
@@ -167,6 +181,14 @@ vspin:	b	vspin
  */
 	.globl newcore
 newcore:
+
+	mrs	r0, cpsr		/* disable interrupts */
+	orr	r0, r0, #PSR_INT_DIS
+	msr	cpsr, r0
+
+	movw	r0, #:lower16:vectors	/* set VBAR */
+	movt	r0, #:upper16:vectors
+	mcr 	p15, 0, r0, c12, c0, 0
 
 #ifdef notdef
 	/*

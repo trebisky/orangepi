@@ -269,8 +269,12 @@ fail ( void )
 	// this is supposed to be an ARM
 	// permanently defined illegal instruction encoding.
 	//    0xf7fXaXXX
-	// asm volatile (".word 0xf7f0a000\n");
-	trap_ui ();
+	asm volatile (".word 0xf7f0a000\n");
+
+	// We can use this to test the fault routine
+	// trap_ui ();
+
+	puts ( "All done failing.\n" );
 }
 
 /* This gets called by the test menu

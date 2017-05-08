@@ -130,24 +130,38 @@ reset:
 
 	.align  5
 undefined_instruction:
+	ldr	r2, =0x52000000
+	add	sp, r2, #0
 	bl trap_ui
 	b  vspin
 software_interrupt:
+	ldr	r2, =0x52000000
+	add	sp, r2, #0
 	bl trap_si
 	b  vspin
 prefetch_abort:
+	ldr	r2, =0x52000000
+	add	sp, r2, #0
 	bl trap_pa
 	b  vspin
 data_abort:
+	ldr	r2, =0x52000000
+	add	sp, r2, #0
 	bl trap_da
 	b  vspin
 not_used:
+	ldr	r2, =0x52000000
+	add	sp, r2, #0
 	bl trap_nu
 	b  vspin
 irq:
+	ldr	r2, =0x52000000
+	add	sp, r2, #0
 	bl trap_irq
 	b  vspin
 fiq:
+	ldr	r2, =0x52000000
+	add	sp, r2, #0
 	bl trap_fiq
 	b  vspin
 

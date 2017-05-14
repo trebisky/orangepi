@@ -85,6 +85,7 @@ extern void newcore ( void );
 
 // #define SENTINEL	ROM_START
 #define SENTINEL	(volatile unsigned long *) 4
+// #define SENTINEL	(volatile unsigned long *) 0x104
 
 /* This is the first C code a new core runs */
 void
@@ -174,6 +175,7 @@ launch_core ( int cpu )
 	// printf ( "-- reset = %08x\n", reset );
 
         *ROM_START = (unsigned long) newcore;  /* in locore.S */
+	print_hex ( "ROM_START set to:", *ROM_START );
 
         *reset = 0;                     /* put core into reset */
 
@@ -189,20 +191,49 @@ launch_core ( int cpu )
 /* Most of the time a core takes 30 counts to start */
 #define MAX_CORE	100
 
+#define DEAD	0xdeadbeef
+
 int
 wait_core ( void )
 {
 	volatile unsigned long *sent;
+	volatile unsigned long *rom;
 	int i;
+	unsigned long rom_val, sent_val;
 
 	sent = SENTINEL;
+	rom = ROM_START;
+	rom_val = *rom;
+	sent_val = *sent;
+
+	print_hex ( "ROM_START first seen with:", rom_val );
+	print_hex ( "Sentinel first seen with:", sent_val );
+
+	print_hex ( "Sentinel next seen with:", *sent );
+	print_hex ( "ROM_START next seen with:", *rom );
+
+	print_hex ( "Sentinel at:", sent );
+	print_hex ( "ROM_START at:", rom );
+
+	for ( i=0; i<MAX_CORE; i++ ) {
+	    if ( *sent != DEAD ) {
+		break;
+	    }
+	}
+	if ( *sent == DEAD )
+	    return 0;
+
+	puts ( "Signs of life\n" );
 
 	for ( i=0; i<MAX_CORE; i++ ) {
 	    if ( *sent == 0 ) {
-		// printf ( "Core started in %d\n", i );
-		return 1;
+		break;
 	    }
 	}
+
+	if ( *sent == 0 )
+	    return 1;
+	print_hex ( "Core partly started with code:", *sent );
 	return 0;
 }
 
@@ -211,10 +242,18 @@ test_one ( int cpu )
 {
 	int stat;
 
-	*SENTINEL = 0xdeadbeef;
+	print_hex ( "Sentinel found with:", *SENTINEL );
+	print_hex ( "ROM_START found with:", *ROM_START );
+
+	*SENTINEL = DEAD;
+
+	print_hex ( "Sentinel initialized with:", *SENTINEL );
+	delay_ms ( 500 );
+	print_hex ( "Sentinel double checked after delay:", *SENTINEL );
 
 	// printf ( "Starting core %d ...\n", cpu );
-	puts ( "Starting core ...\n" );
+	// puts ( "Starting core ...\n" );
+	print_num ( "Starting core ...", cpu );
 	launch_core ( cpu );
 
 	// watch_core ();
@@ -257,17 +296,19 @@ static void
 fail ( void )
 {
 	puts ( "Preparing to fail ...\n" );
-	/*
+
+	/* This don't work !!
 	long *p = (long *) 0xa0000000;
 	*p = 0;
 	 */
 
-	// this just hangs everything ...
-	// __builtin_trap ();
+	// this is a handy thing gcc provides.
+	// it yields an undefined instruction trap.
+	//__builtin_trap ();
 
-	// this just hangs everything too.
+	// this yields an undefined instruction.
 	// this is supposed to be an ARM
-	// permanently defined illegal instruction encoding.
+	// permanently undefined instruction encoding.
 	//    0xf7fXaXXX
 	asm volatile (".word 0xf7f0a000\n");
 
@@ -292,7 +333,7 @@ test_core ( void )
 	// cur_thread = & bogus_thread;
 	// cur_thread = (void *) 0x58000000;
 
-	fail ();
+	// fail ();
 
 #ifdef notdef
 	asm volatile ("mrs %0, cpsr\n" : "=r"(reg) : : "cc" );

@@ -8,7 +8,7 @@
  *
  * locore.S
  *
- * Kyu project  5-12-2015  Tom Trebisky
+ * Kyu project  5-13-2017  Tom Trebisky
  *
  * temporary catch-all for assembly language
  *
@@ -29,11 +29,6 @@
 
 #define PSR_DEFAULT	PSR_M_SUPER
 
-/* XXX  We signal the world with this sram location */
-#define SENTINEL	0x4
-// #define SENTINEL	0x104
-#define ROM_START	0x01f01da4
-
 /* For the time being, this is the first thing linked
  * and U-boot simply branches to a hard address.
  *  0x80000000 on the BBB
@@ -48,15 +43,6 @@
 	.globl asm_startup
 asm_startup:
 
-	@ why not?  sanity check. (It works)
-	mov	r0, #0x42
-	ldr	r1, =SENTINEL
-        str     r0, [r1]
-
-	ldr	r0, =0xc0ffee
-	ldr	r1, =ROM_START
-        str     r0, [r1]
-
 	mrs	r0, cpsr		/* disable interrupts */
 	orr	r0, r0, #PSR_INT_DIS
 	msr	cpsr, r0
@@ -66,8 +52,7 @@ asm_startup:
 	mcr 	p15, 0, r0, c12, c0, 0
 
 	bl	clear_bss
-@	bl	kern_startup
-	bl	test_core
+	bl	test_float
 xspin:	b	xspin
 	bx	lr
 
@@ -176,110 +161,19 @@ fiq:
 
 vspin:	b	vspin
 
-/* This padding here makes the cores start */
-/* This allowed us to rip out a big block of Kyu
- * specific interrupt code, along with a bunch of
- * stub calls.
- * This is total black magic, but the overall goal is
- * to have the address of "newcore" at 0x400004e4
- */
-	// .skip 1056
-	.skip 944
+@ Enable the VFP vector floating point unit
 
-	.align 2
-
-
-/* ==================================================================== */
-/* ==================================================================== */
-/* ==================================================================== */
-
-/* Experimental section for Orange Pi multiple cores */
-
-/* We realize that each core needs its own stack ...
- *  1-28-2017
- * Start each cpu with a 16K stack (very generous).
- */
-	.globl newcore
-newcore:
-
-	mov	r0, #1
-	ldr	r1, =SENTINEL
-        str     r0, [r1]
-
-	ldr	r0, =0xc0ffee00
-	ldr	r1, =ROM_START
-        str     r0, [r1]
-
-nspin:	b	nspin
-
-	mrs	r0, cpsr		/* disable interrupts */
-	orr	r0, r0, #PSR_INT_DIS
-	msr	cpsr, r0
-
-	mov	r0, #2
-	ldr	r1, =SENTINEL
-        str     r0, [r1]
-
-	movw	r0, #:lower16:vectors	/* set VBAR */
-	movt	r0, #:upper16:vectors
-	mcr 	p15, 0, r0, c12, c0, 0
-
-	mov	r0, #3
-	ldr	r1, =SENTINEL
-        str     r0, [r1]
-
-#ifdef notdef
-	/*
-         * Invalidate the L1 I and D cache
-         */
-        mov     r0, #0                  @ set up for MCR
-        mcr     p15, 0, r0, c8, c7, 0   @ invalidate TLBs
-        mcr     p15, 0, r0, c7, c5, 0   @ invalidate icache
-        mcr     p15, 0, r0, c7, c5, 6   @ invalidate BP array
-        mcr     p15, 0, r0, c7, c10, 4  @ DSB
-        mcr     p15, 0, r0, c7, c5, 4   @ ISB
-
-        /*
-         * disable MMU stuff and caches
-         */
-        mrc     p15, 0, r0, c1, c0, 0
-        bic     r0, r0, #0x00002000     @ clear bits 13 (--V-)
-        bic     r0, r0, #0x00000007     @ clear bits 2:0 (-CAM)
-        orr     r0, r0, #0x00000002     @ set bit 1 (--A-) Align
-        orr     r0, r0, #0x00000800     @ set bit 11 (Z---) BTB
-
-	@ enable the I cache
-        @bic     r0, r0, #0x00001000     @ clear bit 12 (I) I-cache
-        orr     r0, r0, #0x00001000     @ set bit 12 (I) I-cache
-
-        mcr     p15, 0, r0, c1, c0, 0
-#endif
+        .globl fp_enable
+fp_enable:
+        mrc     p15, 0, r0, c1, c0, 2
+        orr     r0, r0, #0x300000 @ single precision
+        orr     r0, r0, #0xC00000 @ double precision
+        mcr     p15, 0, r0, c1, c0, 2
+        isb
+        mov     r0, #0x40000000
+        fmxr    fpexc,r0
+        mov     pc, lr
 
 
-	/* Read processor affinity register */
-        mrc     p15, 0, r0, c0, c0, 5
-	and	r0, #3
-	lsl	r0, #14
-	@ldr	r2, =core_stacks
-	@ldr	r2, [r2]
-	ldr	r2, =0x50000000
-	add	sp, r2, r0
-
-	/* pass core number in r0 as argument */
-        mrc     p15, 0, r0, c0, c0, 5
-	and	r0, #3
-
-	bl	kyu_newcore
-
-@ If we return, we will spin here rapidly
-@ incrementing the sentinel location.
-@ note that there is special static ram at addr 0
-
-	mov	r0, #0
-	ldr	r1, =SENTINEL
-loopcore:
-	add	r0, #1
-        str     r0, [r1]
-        b      loopcore
 
 /* THE END */

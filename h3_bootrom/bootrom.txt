@@ -24,15 +24,18 @@ Disassembly of section .text:
 ; All except the first vector branch to 0xffff0024 and spin
 
 ffff0000:	ea000008 	b	0xffff0028	; reset
-ffff0004:	ea000006 	b	0xffff0024
-ffff0008:	ea000005 	b	0xffff0024
-ffff000c:	ea000004 	b	0xffff0024
-ffff0010:	ea000003 	b	0xffff0024
-ffff0014:	ea000002 	b	0xffff0024
-ffff0018:	ea000011 	b	0xffff0064
-ffff001c:	ea000000 	b	0xffff0024
+ffff0004:	ea000006 	b	0xffff0024	; undefined instruction
+ffff0008:	ea000005 	b	0xffff0024	; software interrupt
+ffff000c:	ea000004 	b	0xffff0024	; prefetch abort
+ffff0010:	ea000003 	b	0xffff0024	; data abort
+ffff0014:	ea000002 	b	0xffff0024	; unused
+ffff0018:	ea000011 	b	0xffff0064	; IRQ
+ffff001c:	ea000000 	b	0xffff0024	; FIQ
+
+; This address gets called as subroutine
 ffff0020:	ea000013 	b	0xffff0074
-ffff0024:	eafffffe 	b	0xffff0024
+
+ffff0024:	eafffffe 	b	0xffff0024	; spin
 
 ffff0028:	e3a00001 	mov	r0, #1
 ffff002c:	e3a01000 	mov	r1, #0
@@ -53,10 +56,14 @@ ffff005c:	e3a0d000 	mov	sp, #0
 
 ffff0060:	e59ff100 	ldr	pc, [pc, #256]	; 0xffff0168
 
+; FIQ handler
 ffff0064:	e24ee004 	sub	lr, lr, #4
 ffff0068:	e92d5fff 	push	{r0, r1, r2, r3, r4, r5, r6, r7, r8, r9, sl, fp, ip, lr}
 ffff006c:	eb000723 	bl	0xffff1d00
 ffff0070:	e8fd9fff 	ldm	sp!, {r0, r1, r2, r3, r4, r5, r6, r7, r8, r9, sl, fp, ip, pc}^
+
+; subroutine, called from ffff0020 above.
+
 ffff0074:	e3a020d2 	mov	r2, #210	; 0xd2
 ffff0078:	e121f002 	msr	CPSR_c, r2
 ffff007c:	e59fd0e8 	ldr	sp, [pc, #232]	; 0xffff016c
@@ -99,9 +106,11 @@ ffff010c:	e59130cc 	ldr	r3, [r1, #204]	; 0xcc
 ffff0110:	e3c33c01 	bic	r3, r3, #256	; 0x100
 ffff0114:	e1834002 	orr	r4, r3, r2
 ffff0118:	e58140cc 	str	r4, [r1, #204]	; 0xcc
-ffff011c:	e3020710 	movw	r0, #10000	; 0x2710
+
+ffff011c:	e3020710 	movw	r0, #10000	; delay
 ffff0120:	e2500001 	subs	r0, r0, #1
 ffff0124:	1afffffd 	bne	0xffff0120
+
 ffff0128:	e3a02502 	mov	r2, #8388608	; 0x800000
 ffff012c:	e5913060 	ldr	r3, [r1, #96]	; 0x60
 ffff0130:	e3c33502 	bic	r3, r3, #8388608	; 0x800000
@@ -118,6 +127,8 @@ ffff0158:	e3c33001 	bic	r3, r3, #1
 ffff015c:	e1834002 	orr	r4, r3, r2
 ffff0160:	e58140cc 	str	r4, [r1, #204]	; 0xcc
 ffff0164:	eb000896 	bl	0xffff23c4
+
+; better not return here
 
 ffff0168:	ffff2c00
 
@@ -141,6 +152,7 @@ ffff01ac:	e5d40018 	ldrb	r0, [r4, #24]
 ffff01b0:	e3500001 	cmp	r0, #1
 ffff01b4:	0afffff5 	beq	0xffff0190
 ffff01b8:	e8bd8070 	pop	{r4, r5, r6, pc}
+
 ffff01bc:	e92d4010 	push	{r4, lr}
 ffff01c0:	e1a04000 	mov	r4, r0
 ffff01c4:	e3a02022 	mov	r2, #34	; 0x22
@@ -151,6 +163,8 @@ ffff01d4:	e3a00000 	mov	r0, #0
 ffff01d8:	e5c40020 	strb	r0, [r4, #32]
 ffff01dc:	e5c40021 	strb	r0, [r4, #33]	; 0x21
 ffff01e0:	e8bd8010 	pop	{r4, pc}
+
+; subroutine
 ffff01e4:	e5801000 	str	r1, [r0]
 ffff01e8:	e5802004 	str	r2, [r0, #4]
 ffff01ec:	e3a03000 	mov	r3, #0
@@ -159,6 +173,7 @@ ffff01f4:	e5803010 	str	r3, [r0, #16]
 ffff01f8:	e3a03001 	mov	r3, #1
 ffff01fc:	e5c03018 	strb	r3, [r0, #24]
 ffff0200:	e12fff1e 	bx	lr
+
 ffff0204:	e92d4070 	push	{r4, r5, r6, lr}
 ffff0208:	e24dd020 	sub	sp, sp, #32
 ffff020c:	e1a06000 	mov	r6, r0
@@ -605,14 +620,35 @@ ffff08ec:	e1b04002 	movs	r4, r2
 ffff08f0:	e2422001 	sub	r2, r2, #1
 ffff08f4:	1afffffa 	bne	0xffff08e4
 ffff08f8:	e8bd8030 	pop	{r4, r5, pc}
+
+; subroutine
+;  called from many places.
+;
+; note: the "s" in movs says to set the condition codes
+; a typical call looks like this:
+; The final shift by 1 in the strb is confusing to me.
+;
+;  movw	r2, #0x100
+;  mov	r1, #0xcc
+;  movw	r0, #0x7e00
+;
+; Here r2 is the count and r1 is the value to store.
+; r3 is the place to store it, over and over.
+; lots of dubious coding here.
+; Why save and restore r5 ?
+; Why copy r0 to r3 ?
+
 ffff08fc:	e92d4030 	push	{r4, r5, lr}
-ffff0900:	e1a03000 	mov	r3, r0
+ffff0900:	e1a03000 	mov	r3, r0		; r3 = r0
 ffff0904:	ea000000 	b	0xffff090c
+
 ffff0908:	e4c31001 	strb	r1, [r3], #1
-ffff090c:	e1b04002 	movs	r4, r2
-ffff0910:	e2422001 	sub	r2, r2, #1
+ffff090c:	e1b04002 	movs	r4, r2		; r4 = r2 (set cc)
+ffff0910:	e2422001 	sub	r2, r2, #1	; r2--
 ffff0914:	1afffffb 	bne	0xffff0908
-ffff0918:	e8bd8030 	pop	{r4, r5, pc}
+
+ffff0918:	e8bd8030 	pop	{r4, r5, pc}	; return
+
 ffff091c:	e3a00000 	mov	r0, #0
 ffff0920:	e320f000 	nop	{0}
 ffff0924:	ea000000 	b	0xffff092c
@@ -1649,7 +1685,8 @@ ffff193c:	01c19008 	biceq	r9, r1, r8
 ffff1940:	01c1900c 	biceq	r9, r1, ip
 ffff1944:	01c19010 	biceq	r9, r1, r0, lsl r0
 ffff1948:	01c19086 	biceq	r9, r1, r6, lsl #1
-ffff194c:	00007d00 	andeq	r7, r0, r0, lsl #26
+
+ffff194c:	00007d00
 ffff1950:	e3a00001 	mov	r0, #1
 ffff1954:	e1a07410 	lsl	r7, r0, r4
 ffff1958:	e1190007 	tst	r9, r7
@@ -1886,6 +1923,8 @@ ffff1cf0:	e92d4010 	push	{r4, lr}
 ffff1cf4:	e3a00067 	mov	r0, #103	; 0x67
 ffff1cf8:	ebffffe5 	bl	0xffff1c94
 ffff1cfc:	e8bd8010 	pop	{r4, pc}
+
+; FIQ handler
 ffff1d00:	e92d4010 	push	{r4, lr}
 ffff1d04:	e59f0b2c 	ldr	r0, [pc, #2860]	; 0xffff2838
 ffff1d08:	e590400c 	ldr	r4, [r0, #12]
@@ -2293,12 +2332,17 @@ ffff234c:	e5801008 	str	r1, [r0, #8]
 ffff2350:	e5801004 	str	r1, [r0, #4]
 ffff2354:	e5801000 	str	r1, [r0]
 ffff2358:	e12fff1e 	bx	lr
+
+; subroutine - called only from below
+; wrapper on call to ffff08fc (so why not inline it?)
 ffff235c:	e92d4010 	push	{r4, lr}
 ffff2360:	e3002100 	movw	r2, #256	; 0x100
 ffff2364:	e3a010cc 	mov	r1, #204	; 0xcc
 ffff2368:	e3070e00 	movw	r0, #32256	; 0x7e00
 ffff236c:	ebfff962 	bl	0xffff08fc
 ffff2370:	e8bd8010 	pop	{r4, pc}
+
+; subroutine
 ffff2374:	e92d4010 	push	{r4, lr}
 ffff2378:	e3a03000 	mov	r3, #0
 ffff237c:	e3a01000 	mov	r1, #0
@@ -2319,93 +2363,122 @@ ffff23b4:	ea000001 	b	0xffff23c0
 ffff23b8:	e3a04000 	mov	r4, #0
 ffff23bc:	e580404c 	str	r4, [r0, #76]	; 0x4c
 ffff23c0:	e8bd8010 	pop	{r4, pc}
+
+; subroutine
+; called in an odd way during initialization
+; Note that the H3 has SRAM from 0 - 0xffff
+;		(actually from 0 - 0x1afff)
+
 ffff23c4:	e92d4010 	push	{r4, lr}
 ffff23c8:	e24ddd47 	sub	sp, sp, #4544	; 0x11c0
 ffff23cc:	ebffffe2 	bl	0xffff235c
 ffff23d0:	e28d0a01 	add	r0, sp, #4096	; 0x1000
 ffff23d4:	e2800e17 	add	r0, r0, #368	; 0x170
-ffff23d8:	e51f1a94 	ldr	r1, [pc, #-2708]	; 0xffff194c
+ffff23d8:	e51f1a94 	ldr	r1, [pc, #-2708]	; 0xffff194c ( 00007d00 )
 ffff23dc:	e5810000 	str	r0, [r1]
+
 ffff23e0:	e28d1a01 	add	r1, sp, #4096	; 0x1000
 ffff23e4:	e2811f57 	add	r1, r1, #348	; 0x15c
 ffff23e8:	e28d0a01 	add	r0, sp, #4096	; 0x1000
 ffff23ec:	e5801170 	str	r1, [r0, #368]	; 0x170
+
 ffff23f0:	e28d1a01 	add	r1, sp, #4096	; 0x1000
 ffff23f4:	e2811e15 	add	r1, r1, #336	; 0x150
 ffff23f8:	e28d0a01 	add	r0, sp, #4096	; 0x1000
 ffff23fc:	e5801174 	str	r1, [r0, #372]	; 0x174
+
 ffff2400:	e28d1a01 	add	r1, sp, #4096	; 0x1000
 ffff2404:	e2811f51 	add	r1, r1, #324	; 0x144
 ffff2408:	e28d0a01 	add	r0, sp, #4096	; 0x1000
 ffff240c:	e5801178 	str	r1, [r0, #376]	; 0x178
+
 ffff2410:	e28d1a01 	add	r1, sp, #4096	; 0x1000
 ffff2414:	e2811f4f 	add	r1, r1, #316	; 0x13c
 ffff2418:	e28d0a01 	add	r0, sp, #4096	; 0x1000
 ffff241c:	e580117c 	str	r1, [r0, #380]	; 0x17c
+
 ffff2420:	e28d1a01 	add	r1, sp, #4096	; 0x1000
 ffff2424:	e2811f4d 	add	r1, r1, #308	; 0x134
 ffff2428:	e28d0a01 	add	r0, sp, #4096	; 0x1000
 ffff242c:	e5801180 	str	r1, [r0, #384]	; 0x180
+
 ffff2430:	e28d1a01 	add	r1, sp, #4096	; 0x1000
 ffff2434:	e2811f4b 	add	r1, r1, #300	; 0x12c
 ffff2438:	e28d0a01 	add	r0, sp, #4096	; 0x1000
 ffff243c:	e5801184 	str	r1, [r0, #388]	; 0x184
+
 ffff2440:	e28d1a01 	add	r1, sp, #4096	; 0x1000
 ffff2444:	e2811f49 	add	r1, r1, #292	; 0x124
 ffff2448:	e28d0a01 	add	r0, sp, #4096	; 0x1000
 ffff244c:	e5801188 	str	r1, [r0, #392]	; 0x188
+
 ffff2450:	e28d1a01 	add	r1, sp, #4096	; 0x1000
 ffff2454:	e2811f47 	add	r1, r1, #284	; 0x11c
 ffff2458:	e28d0a01 	add	r0, sp, #4096	; 0x1000
 ffff245c:	e580118c 	str	r1, [r0, #396]	; 0x18c
+
 ffff2460:	e28d1a01 	add	r1, sp, #4096	; 0x1000
 ffff2464:	e2811f45 	add	r1, r1, #276	; 0x114
 ffff2468:	e28d0a01 	add	r0, sp, #4096	; 0x1000
 ffff246c:	e5801190 	str	r1, [r0, #400]	; 0x190
+
 ffff2470:	e28d1a01 	add	r1, sp, #4096	; 0x1000
 ffff2474:	e28110cc 	add	r1, r1, #204	; 0xcc
 ffff2478:	e28d0a01 	add	r0, sp, #4096	; 0x1000
 ffff247c:	e5801194 	str	r1, [r0, #404]	; 0x194
+
 ffff2480:	e28d1a01 	add	r1, sp, #4096	; 0x1000
 ffff2484:	e28110b0 	add	r1, r1, #176	; 0xb0
 ffff2488:	e28d0a01 	add	r0, sp, #4096	; 0x1000
 ffff248c:	e5801198 	str	r1, [r0, #408]	; 0x198
+
 ffff2490:	e28d1a01 	add	r1, sp, #4096	; 0x1000
 ffff2494:	e2811094 	add	r1, r1, #148	; 0x94
 ffff2498:	e28d0a01 	add	r0, sp, #4096	; 0x1000
 ffff249c:	e580119c 	str	r1, [r0, #412]	; 0x19c
+
 ffff24a0:	e28d1a01 	add	r1, sp, #4096	; 0x1000
 ffff24a4:	e2811078 	add	r1, r1, #120	; 0x78
 ffff24a8:	e28d0a01 	add	r0, sp, #4096	; 0x1000
 ffff24ac:	e58011a0 	str	r1, [r0, #416]	; 0x1a0
+
 ffff24b0:	e28d1a01 	add	r1, sp, #4096	; 0x1000
 ffff24b4:	e281105c 	add	r1, r1, #92	; 0x5c
 ffff24b8:	e28d0a01 	add	r0, sp, #4096	; 0x1000
 ffff24bc:	e58011a4 	str	r1, [r0, #420]	; 0x1a4
+
 ffff24c0:	e28d0a01 	add	r0, sp, #4096	; 0x1000
 ffff24c4:	e2800f6a 	add	r0, r0, #424	; 0x1a8
 ffff24c8:	ebffff9e 	bl	0xffff2348
+
 ffff24cc:	e28d0a01 	add	r0, sp, #4096	; 0x1000
 ffff24d0:	e2800e17 	add	r0, r0, #368	; 0x170
 ffff24d4:	ebffffa6 	bl	0xffff2374
+
 ffff24d8:	e28d0a01 	add	r0, sp, #4096	; 0x1000
 ffff24dc:	e2800e17 	add	r0, r0, #368	; 0x170
 ffff24e0:	ebfffe17 	bl	0xffff1d44
+
 ffff24e4:	e28d0a01 	add	r0, sp, #4096	; 0x1000
 ffff24e8:	e2800f57 	add	r0, r0, #348	; 0x15c
 ffff24ec:	ebfffe24 	bl	0xffff1d84
+
 ffff24f0:	e28d0a01 	add	r0, sp, #4096	; 0x1000
 ffff24f4:	e2800e15 	add	r0, r0, #336	; 0x150
 ffff24f8:	ebfffe3a 	bl	0xffff1de8
+
 ffff24fc:	e28d0a01 	add	r0, sp, #4096	; 0x1000
 ffff2500:	e2800f51 	add	r0, r0, #324	; 0x144
 ffff2504:	ebfffe47 	bl	0xffff1e28
+
 ffff2508:	e28d0a01 	add	r0, sp, #4096	; 0x1000
 ffff250c:	e2800f4f 	add	r0, r0, #316	; 0x13c
 ffff2510:	ebfffe54 	bl	0xffff1e68
+
 ffff2514:	e28d0a01 	add	r0, sp, #4096	; 0x1000
 ffff2518:	e2800f4d 	add	r0, r0, #308	; 0x134
 ffff251c:	ebfffe5e 	bl	0xffff1e9c
+
 ffff2520:	e28d2a01 	add	r2, sp, #4096	; 0x1000
 ffff2524:	e2822f4f 	add	r2, r2, #316	; 0x13c
 ffff2528:	e28d1a01 	add	r1, sp, #4096	; 0x1000
@@ -2472,7 +2545,10 @@ ffff2618:	e28d0a01 	add	r0, sp, #4096	; 0x1000
 ffff261c:	e2800e17 	add	r0, r0, #368	; 0x170
 ffff2620:	ebfff89a 	bl	0xffff0890
 ffff2624:	e28ddd47 	add	sp, sp, #4544	; 0x11c0
-ffff2628:	e8bd8010 	pop	{r4, pc}
+ffff2628:	e8bd8010 	pop	{r4, pc}			; RETURN
+
+; subroutine (called from one place) 
+; I see no escape
 ffff262c:	e92d4070 	push	{r4, r5, r6, lr}
 ffff2630:	e1a04000 	mov	r4, r0
 ffff2634:	e3a06000 	mov	r6, #0
@@ -2482,6 +2558,7 @@ ffff2640:	e2806020 	add	r6, r0, #32
 ffff2644:	e5d60004 	ldrb	r0, [r6, #4]
 ffff2648:	ebfff9dc 	bl	0xffff0dc0
 ffff264c:	ea00000a 	b	0xffff267c
+
 ffff2650:	e51f0d24 	ldr	r0, [pc, #-3364]	; 0xffff1934
 ffff2654:	e1d008b2 	ldrh	r0, [r0, #130]	; 0x82
 ffff2658:	e3100001 	tst	r0, #1
@@ -2494,6 +2571,7 @@ ffff2670:	e3a00002 	mov	r0, #2
 ffff2674:	eafffffa 	b	0xffff2664
 ffff2678:	e2455001 	sub	r5, r5, #1
 ffff267c:	eafffff3 	b	0xffff2650
+
 ffff2680:	e92d40f0 	push	{r4, r5, r6, r7, lr}
 ffff2684:	e1a04000 	mov	r4, r0
 ffff2688:	e3a05000 	mov	r5, #0
@@ -2890,11 +2968,13 @@ ffff2c48:	e2001003 	and	r1, r0, #3
 ffff2c4c:	e3510000 	cmp	r1, #0
 ffff2c50:	1afffff9 	bne	0xffff2c3c
 
+; we are core 0
 ; check for non zero cluster number (unlikely)
 ffff2c54:	e2001cff 	and	r1, r0, #65280	; 0xff00
 ffff2c58:	e3510000 	cmp	r1, #0
 ffff2c5c:	1afffff6 	bne	0xffff2c3c
 
+; cluster number is 0
 ; check for magic number to bounce reset (for warm start?)
 ffff2c60:	e59f11a8 	ldr	r1, [pc, #424]	; 0xffff2e10	(PRIVATE1)
 ffff2c64:	e59f21a8 	ldr	r2, [pc, #424]	; 0xffff2e14	(MAGIC)
@@ -2903,61 +2983,75 @@ ffff2c6c:	e1520003 	cmp	r2, r3
 ffff2c70:	1a000000 	bne	0xffff2c78
 ffff2c74:	eafffff0 	b	0xffff2c3c	; start core
 
+; *** Normal startup of core 0
 ; continue running here for normal startup (not a second core).
+
 ffff2c78:	e3a00002 	mov	r0, #2
-ffff2c7c:	eb000047 	bl	0xffff2da0
-ffff2c80:	e3a00050 	mov	r0, #80	; 0x50
+ffff2c7c:	eb000047 	bl	0xffff2da0	; call CLONK ( 2 )
+
+ffff2c80:	e3a00050 	mov	r0, #80		; delay
 ffff2c84:	e2500001 	subs	r0, r0, #1
 ffff2c88:	1afffffd 	bne	0xffff2c84
+
 ffff2c8c:	e10f0000 	mrs	r0, CPSR
-ffff2c90:	e3c0001f 	bic	r0, r0, #31
-ffff2c94:	e3800013 	orr	r0, r0, #19
+ffff2c90:	e3c0001f 	bic	r0, r0, #31	; 0x1f
+ffff2c94:	e3800013 	orr	r0, r0, #19	; 0x13
 ffff2c98:	e38000c0 	orr	r0, r0, #192	; 0xc0
 ffff2c9c:	e3c00c02 	bic	r0, r0, #512	; 0x200
 ffff2ca0:	e121f000 	msr	CPSR_c, r0
+
 ffff2ca4:	ee110f10 	mrc	15, 0, r0, cr1, cr0, {0}
 ffff2ca8:	e3c00005 	bic	r0, r0, #5
 ffff2cac:	e3c00b06 	bic	r0, r0, #6144	; 0x1800
 ffff2cb0:	ee010f10 	mcr	15, 0, r0, cr1, cr0, {0}
+
 ffff2cb4:	e59f115c 	ldr	r1, [pc, #348]	; 0xffff2e18
 ffff2cb8:	e5912000 	ldr	r2, [r1]
 ffff2cbc:	e3c22001 	bic	r2, r2, #1
 ffff2cc0:	e5812000 	str	r2, [r1]
+
 ffff2cc4:	e59f1150 	ldr	r1, [pc, #336]	; 0xffff2e1c
 ffff2cc8:	e3a02801 	mov	r2, #65536	; 0x10000
 ffff2ccc:	e5913050 	ldr	r3, [r1, #80]	; 0x50
 ffff2cd0:	e3c33803 	bic	r3, r3, #196608	; 0x30000
 ffff2cd4:	e1834002 	orr	r4, r3, r2
 ffff2cd8:	e5814050 	str	r4, [r1, #80]	; 0x50
+
 ffff2cdc:	e3a02000 	mov	r2, #0
 ffff2ce0:	e5913050 	ldr	r3, [r1, #80]	; 0x50
 ffff2ce4:	e3c33003 	bic	r3, r3, #3
 ffff2ce8:	e1834002 	orr	r4, r3, r2
 ffff2cec:	e5814050 	str	r4, [r1, #80]	; 0x50
+
 ffff2cf0:	e3a02c01 	mov	r2, #256	; 0x100
 ffff2cf4:	e5913054 	ldr	r3, [r1, #84]	; 0x54
 ffff2cf8:	e3c330f0 	bic	r3, r3, #240	; 0xf0
 ffff2cfc:	e3c33c03 	bic	r3, r3, #768	; 0x300
 ffff2d00:	e1834002 	orr	r4, r3, r2
 ffff2d04:	e5814054 	str	r4, [r1, #84]	; 0x54
+
 ffff2d08:	e3a02a01 	mov	r2, #4096	; 0x1000
 ffff2d0c:	e5913054 	ldr	r3, [r1, #84]	; 0x54
 ffff2d10:	e3c33a03 	bic	r3, r3, #12288	; 0x3000
 ffff2d14:	e1834002 	orr	r4, r3, r2
 ffff2d18:	e5814054 	str	r4, [r1, #84]	; 0x54
+
 ffff2d1c:	e59f10f8 	ldr	r1, [pc, #248]	; 0xffff2e1c
 ffff2d20:	e59122c0 	ldr	r2, [r1, #704]	; 0x2c0
 ffff2d24:	e3a03040 	mov	r3, #64	; 0x40
 ffff2d28:	e1822003 	orr	r2, r2, r3
 ffff2d2c:	e58122c0 	str	r2, [r1, #704]	; 0x2c0
+
 ffff2d30:	e5912060 	ldr	r2, [r1, #96]	; 0x60
 ffff2d34:	e3a03040 	mov	r3, #64	; 0x40
 ffff2d38:	e1822003 	orr	r2, r2, r3
 ffff2d3c:	e5812060 	str	r2, [r1, #96]	; 0x60
+
 ffff2d40:	e5912068 	ldr	r2, [r1, #104]	; 0x68
 ffff2d44:	e3a03020 	mov	r3, #32
 ffff2d48:	e1822003 	orr	r2, r2, r3
 ffff2d4c:	e5812068 	str	r2, [r1, #104]	; 0x68
+
 ffff2d50:	e59fd0c8 	ldr	sp, [pc, #200]	; 0xffff2e20
 ffff2d54:	e59f30c8 	ldr	r3, [pc, #200]	; 0xffff2e24
 ffff2d58:	e5932000 	ldr	r2, [r3]
@@ -2966,48 +3060,70 @@ ffff2d60:	e0010002 	and	r0, r1, r2
 ffff2d64:	e30e1fe8 	movw	r1, #61416	; 0xefe8
 ffff2d68:	e1500001 	cmp	r0, r1
 ffff2d6c:	0a000083 	beq	0xffff2f80
-ffff2d70:	e3a00e7d 	mov	r0, #2000	; 0x7d0
+
+ffff2d70:	e3a00e7d 	mov	r0, #2000	; delay
 ffff2d74:	e2500001 	subs	r0, r0, #1
 ffff2d78:	1afffffd 	bne	0xffff2d74
+
 ffff2d7c:	e59fd09c 	ldr	sp, [pc, #156]	; 0xffff2e20
 ffff2d80:	e3a01507 	mov	r1, #29360128	; 0x1c00000
 ffff2d84:	e3a02000 	mov	r2, #0
 ffff2d88:	e5812000 	str	r2, [r1]
-ffff2d8c:	e356005c 	cmp	r6, #92	; 0x5c
+
+ffff2d8c:	e356005c 	cmp	r6, #92		; 0x5c
 ffff2d90:	0a000033 	beq	0xffff2e64
 ffff2d94:	e3a0006f 	mov	r0, #111	; 0x6f
 ffff2d98:	eb000038 	bl	0xffff2e80
 
 ffff2d9c:	eafffffe 	b	0xffff2d9c	; spin ***
 
-; first subroutine
-ffff2da0:	e59f1080 	ldr	r1, [pc, #128]	; 0xffff2e28
-ffff2da4:	e5912000 	ldr	r2, [r1]
-ffff2da8:	e3a03001 	mov	r3, #1
-ffff2dac:	e1822003 	orr	r2, r2, r3
-ffff2db0:	e5812000 	str	r2, [r1]
+;  subroutine CLONK
+; This monkeys with a register at 01c000a4
+; this is an apparently undocumented register in the system control area.
+; Curiously r0 is an argument that governs how many times we go around
+; the big loop in this code.
+; This is called from many places, with values 2, 3, 4, 5, 6, 7, 8, 9, 10
+; The low bit in 01c000a4 seems to be some kind of "enable"
+;  it gets turned on when we enter this routine, and off before we exit
+; The next bit (0x02) gets pulsed the number of times specified by r0
+
+ffff2da0:	e59f1080 	ldr	r1, [pc, #128]	; 0xffff2e28 gets 01c000a4
+
+ffff2da4:	e5912000 	ldr	r2, [r1]	; read from 01c000a4
+ffff2da8:	e3a03001 	mov	r3, #1		; r3 = 1
+ffff2dac:	e1822003 	orr	r2, r2, r3	; turn on low bit (enable)
+ffff2db0:	e5812000 	str	r2, [r1]	; store back
+
+; begin loop
+
 ffff2db4:	e59f106c 	ldr	r1, [pc, #108]	; 0xffff2e28
-ffff2db8:	e3a03002 	mov	r3, #2
+ffff2db8:	e3a03002 	mov	r3, #2		; r3 = 2
+
 ffff2dbc:	e5912000 	ldr	r2, [r1]
-ffff2dc0:	e1c22003 	bic	r2, r2, r3
+ffff2dc0:	e1c22003 	bic	r2, r2, r3	; clear bit
 ffff2dc4:	e5812000 	str	r2, [r1]
+
 ffff2dc8:	e5912000 	ldr	r2, [r1]
-ffff2dcc:	e1822003 	orr	r2, r2, r3
+ffff2dcc:	e1822003 	orr	r2, r2, r3	; set bit
 ffff2dd0:	e5812000 	str	r2, [r1]
-ffff2dd4:	e3a02003 	mov	r2, #3
+
+ffff2dd4:	e3a02003 	mov	r2, #3		; short delay loop
 ffff2dd8:	e2522001 	subs	r2, r2, #1
 ffff2ddc:	1afffffd 	bne	0xffff2dd8
-ffff2de0:	e5912000 	ldr	r2, [r1]
+
+ffff2de0:	e5912000 	ldr	r2, [r1]	; clear bit
 ffff2de4:	e1c22003 	bic	r2, r2, r3
 ffff2de8:	e5812000 	str	r2, [r1]
+
 ffff2dec:	e2500001 	subs	r0, r0, #1
-ffff2df0:	1affffef 	bne	0xffff2db4
+ffff2df0:	1affffef 	bne	0xffff2db4	; loop
+
 ffff2df4:	e59f102c 	ldr	r1, [pc, #44]	; 0xffff2e28
 ffff2df8:	e5912000 	ldr	r2, [r1]
 ffff2dfc:	e3a03001 	mov	r3, #1
-ffff2e00:	e1c22003 	bic	r2, r2, r3
+ffff2e00:	e1c22003 	bic	r2, r2, r3	; clear low bit (enable)
 ffff2e04:	e5812000 	str	r2, [r1]
-ffff2e08:	e1a0f00e 	mov	pc, lr
+ffff2e08:	e1a0f00e 	mov	pc, lr		; return
 
 ffff2e0c:	01f01da4 	; address of PRIVATE0
 ffff2e10:	01f01dac 	; another address (PRIVATE1)
@@ -3017,31 +3133,39 @@ ffff2e18:	01c20cb8 	; hw ???
 ffff2e1c:	01c20000 	; hw ???
 ffff2e20:	0000f7fc 	; first stack
 ffff2e24:	01f01da0 	; ???
-ffff2e28:	01c000a4	; register ??
+ffff2e28:	01c000a4	; undocumented register
 
-ffff2e2c:	e3a02000 	mov	r2, #0
-ffff2e30:	e3a01000 	mov	r1, #0
-ffff2e34:	e3a03702 	mov	r3, #524288	; 0x80000
+; subroutine
+
+ffff2e2c:	e3a02000 	mov	r2, #0		; r2 = 0
+ffff2e30:	e3a01000 	mov	r1, #0		; r1 = 0
+ffff2e34:	e3a03702 	mov	r3, #524288	; r3 = 0x80000
 ffff2e38:	e0831400 	add	r1, r3, r0, lsl #8
 ffff2e3c:	e5912000 	ldr	r2, [r1]
-ffff2e40:	e12fff1e 	bx	lr
+ffff2e40:	e12fff1e 	bx	lr		; return
+
+; subroutine
 
 ffff2e44:	e92d4070 	push	{r4, r5, r6, lr}
 ffff2e48:	e1a04000 	mov	r4, r0
 ffff2e4c:	e1a05001 	mov	r5, r1
 ffff2e50:	e3a00007 	mov	r0, #7
-ffff2e54:	ebffffd1 	bl	0xffff2da0
+ffff2e54:	ebffffd1 	bl	0xffff2da0	; call CLONK ( 7 )
 ffff2e58:	e1a00004 	mov	r0, r4
 ffff2e5c:	eb0012f4 	bl	0xffff7a34
 ffff2e60:	e8bd8070 	pop	{r4, r5, r6, pc}
 
+; subroutine
+
 ffff2e64:	e92d4010 	push	{r4, lr}
-ffff2e68:	e3a04000 	mov	r4, #0
+ffff2e68:	e3a04000 	mov	r4, #0		; r4 = 0
 ffff2e6c:	e3a00008 	mov	r0, #8
-ffff2e70:	ebffffca 	bl	0xffff2da0
-ffff2e74:	e59f017c 	ldr	r0, [pc, #380]	; 0xffff2ff8
+ffff2e70:	ebffffca 	bl	0xffff2da0	; call CLONK ( 8 )
+ffff2e74:	e59f017c 	ldr	r0, [pc, #380]	; 0xffff2ff8 ( r0 = ffff0020 )
 ffff2e78:	eb0012ed 	bl	0xffff7a34
 ffff2e7c:	e8bd8010 	pop	{r4, pc}
+
+; subroutine
 
 ffff2e80:	e92d4070 	push	{r4, r5, r6, lr}
 ffff2e84:	e1a05000 	mov	r5, r0
@@ -3057,7 +3181,7 @@ ffff2ea8:	ea00002e 	b	0xffff2f68
 ffff2eac:	e3a00000 	mov	r0, #0
 ffff2eb0:	ebffffdd 	bl	0xffff2e2c
 ffff2eb4:	e3a00003 	mov	r0, #3
-ffff2eb8:	ebffffb8 	bl	0xffff2da0
+ffff2eb8:	ebffffb8 	bl	0xffff2da0	; call CLONK ( 3 )
 ffff2ebc:	e3a00000 	mov	r0, #0
 ffff2ec0:	eb000808 	bl	0xffff4ee8
 ffff2ec4:	e1a04000 	mov	r4, r0
@@ -3067,7 +3191,7 @@ ffff2ed0:	ea000026 	b	0xffff2f70
 ffff2ed4:	e3a00001 	mov	r0, #1
 ffff2ed8:	ebffffd3 	bl	0xffff2e2c
 ffff2edc:	e3a00004 	mov	r0, #4
-ffff2ee0:	ebffffae 	bl	0xffff2da0
+ffff2ee0:	ebffffae 	bl	0xffff2da0	; call CLONK ( 4 )
 ffff2ee4:	eb000756 	bl	0xffff4c44
 ffff2ee8:	e1a04000 	mov	r4, r0
 ffff2eec:	e3540000 	cmp	r4, #0
@@ -3076,7 +3200,7 @@ ffff2ef4:	ea00001d 	b	0xffff2f70
 ffff2ef8:	e3a00002 	mov	r0, #2
 ffff2efc:	ebffffca 	bl	0xffff2e2c
 ffff2f00:	e3a00005 	mov	r0, #5
-ffff2f04:	ebffffa5 	bl	0xffff2da0
+ffff2f04:	ebffffa5 	bl	0xffff2da0	; call CLONK ( 5 )
 ffff2f08:	e3a00002 	mov	r0, #2
 ffff2f0c:	eb00081e 	bl	0xffff4f8c
 ffff2f10:	e1a04000 	mov	r4, r0
@@ -3092,7 +3216,7 @@ ffff2f34:	ea00000d 	b	0xffff2f70
 ffff2f38:	e3a00003 	mov	r0, #3
 ffff2f3c:	ebffffba 	bl	0xffff2e2c
 ffff2f40:	e3a00006 	mov	r0, #6
-ffff2f44:	ebffff95 	bl	0xffff2da0
+ffff2f44:	ebffff95 	bl	0xffff2da0	; call CLONK ( 6 )
 ffff2f48:	eb0011df 	bl	0xffff76cc
 ffff2f4c:	e1a04000 	mov	r4, r0
 ffff2f50:	e3540000 	cmp	r4, #0
@@ -3107,6 +3231,8 @@ ffff2f70:	e3a010fc 	mov	r1, #252	; 0xfc
 ffff2f74:	e3a00000 	mov	r0, #0
 ffff2f78:	ebffffb1 	bl	0xffff2e44
 ffff2f7c:	e8bd8070 	pop	{r4, r5, r6, pc}
+
+; subroutine
 ffff2f80:	e92d4070 	push	{r4, r5, r6, lr}
 ffff2f84:	e59f4070 	ldr	r4, [pc, #112]	; 0xffff2ffc
 ffff2f88:	e3a06000 	mov	r6, #0
@@ -3128,17 +3254,19 @@ ffff2fc4:	eb001208 	bl	0xffff77ec
 ffff2fc8:	e3500000 	cmp	r0, #0
 ffff2fcc:	1a000004 	bne	0xffff2fe4
 ffff2fd0:	e3a00009 	mov	r0, #9
-ffff2fd4:	ebffff71 	bl	0xffff2da0
+ffff2fd4:	ebffff71 	bl	0xffff2da0	; call CLONK ( 9 )
 ffff2fd8:	e3a010fc 	mov	r1, #252	; 0xfc
 ffff2fdc:	e5940000 	ldr	r0, [r4]
 ffff2fe0:	ebffff97 	bl	0xffff2e44
 ffff2fe4:	e3a0000a 	mov	r0, #10
-ffff2fe8:	ebffff6c 	bl	0xffff2da0
+ffff2fe8:	ebffff6c 	bl	0xffff2da0	; call CLONK ( 10 )
 ffff2fec:	e3a00000 	mov	r0, #0
 ffff2ff0:	ebffffa2 	bl	0xffff2e80
 ffff2ff4:	e8bd8070 	pop	{r4, r5, r6, pc}
-ffff2ff8:	ffff0020 			; <UNDEFINED> instruction: 0xffff0020
-ffff2ffc:	01f01da8 	mvnseq	r1, r8, lsr #27
+
+ffff2ff8:	ffff0020
+ffff2ffc:	01f01da8
+
 ffff3000:	4e4f4765 	cdpmi	7, 4, cr4, cr15, cr5, {3}
 ffff3004:	3054422e 	subscc	r4, r4, lr, lsr #4
 ffff3008:	00000000 	andeq	r0, r0, r0
@@ -7888,7 +8016,11 @@ ffff7a24:	44d12001 	ldrbmi	r2, [r1], #1
 ffff7a28:	20c030b2 	strhcs	r3, [r0], #2
 ffff7a2c:	44c02001 	strbmi	r2, [r0], #1
 ffff7a30:	e12fff1e 	bx	lr
+
+; called as subroutine, but immediately branches to 
+; address in r0.
 ffff7a34:	e1a0f000 	mov	pc, r0
+
 ffff7a38:	00000000 	andeq	r0, r0, r0
 ffff7a3c:	ffff41dc 			; <UNDEFINED> instruction: 0xffff41dc
 ffff7a40:	00000000 	andeq	r0, r0, r0

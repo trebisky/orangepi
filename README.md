@@ -13,6 +13,7 @@ If you want to follow my work in order, take them like this:
 
 1. hello - first output to the serial port
 2. blink - blink both on board LED's
+2. float - bare metal floating point
 3. cores1 - get a second CPU core to fire up (not yet working)
 3. cores2 - another attempt at a second core (not yet working)
 3. cores3 - a simple example that does work, pruned back from Kyu sources

@@ -4,7 +4,7 @@
 *.e
 version.c
 tags
-core
+float
 *.elf
 *.bin
 *.dump

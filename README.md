@@ -1,7 +1,7 @@
 This is a collection of programs I have been writing to run on
-the Orange Pi PC and PC3 boards.
+the Orange Pi PC and PC2 boards.
 These boards use the Allwinner H3 and H5 chips respectively.
-The H3 has a 4 core Cortex-A7 inside (32 bit armv7,
+The H3 has a 4 core Cortex-A7 inside (32 bit armv7),
 while the H5 has a 4 core A53 (64 bit armv8) inside.
 Amazingly the peripherals wrapped around each CPU core are
 almost identical.
@@ -41,6 +41,7 @@ After this, my efforts have transitioned to getting Kyu to run on
 the Orange Pi, so you should go there next.  I will probably never
 get the "inter_ez" demo to work (but you never know), and expect to
 try to push forwad the second core business with the aid of the Kyu
-infrastructure.  So this project is sort of finished (maybe).
+infrastructure.  So this project is not expected to get much more
+attention from me, and some things are unfinished.
 
-The bootrom though may get further attention.
+The bootrom is the one thing that may get further attention.

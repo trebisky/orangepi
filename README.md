@@ -36,6 +36,7 @@ For the H5 (Orange Pi PC2):
 
 1. h5_hello_asm - hello world written entirely in assembly.
 2. h5_hello - hello world written in C
+3. h5_no_atf - U-Boot without ATF and secure mode
 
 After this, my efforts have transitioned to getting Kyu to run on
 the Orange Pi, so you should go there next.  I will probably never

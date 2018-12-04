@@ -1,0 +1,20 @@
+#!/bin/sh
+
+# This script is unlikely to be of any use to anyone other than me since
+# it depends on the location of files on my specific system.
+# But it does in a sense "document" where the various binary files
+# come from that this project starts with.
+# Tom Trebisky  12-1-2018
+
+ATF="../../pc2/U-Boot/arm-trusted-firmware"
+
+cp $ATF/build/sun50iw1p1/debug/bl31.bin .
+
+UBOOT="../../pc2/U-Boot/u-boot-2018.09"
+
+cp $UBOOT/spl/u-boot-spl u-boot-spl.elf
+
+#cp $UBOOT/tools/mksunxiboot.c .
+#cp $UBOOT/arch/arm/include/asm/arch-sunxi/spl.h .
+
+# THE END

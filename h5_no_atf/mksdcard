@@ -1,0 +1,22 @@
+#!/bin/sh
+
+sddev=$1
+fsdev=$11
+
+dd if=/dev/zero of=$sddev bs=8k count=64
+
+echo "n
+p
+1
+40960
++50M
+t
+c
+w" | fdisk $sddev
+
+mount $fsdev /mnt
+cp uboot.env /mnt
+umount /mnt
+sync
+
+# THE END

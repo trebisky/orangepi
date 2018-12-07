@@ -3,3 +3,4 @@ zzz/*
 *.bin
 *.img
 mksunxiboot
+mkimage_src

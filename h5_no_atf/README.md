@@ -19,3 +19,6 @@ To build bl31.bin (not part of this project) --
 1. make PLAT=sun50iw1p1 DEBUG=1 bl31
 1. or perhaps: make V=1 PLAT=sun50iw1p1 DEBUG=1 bl31
 1. yields: build/sun50iw1p1/debug/bl31/bl31.elf
+
+Using "make sdcard" will yield an SD card that will run U-boot with the U-boot environment
+set up to do DHCP and TFTP booting of an image called "h5.bin"

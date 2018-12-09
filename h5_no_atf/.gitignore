@@ -2,5 +2,6 @@ zzz
 zzz/*
 *.bin
 *.img
+*.dump
 mksunxiboot
 mkimage_src

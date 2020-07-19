@@ -1,8 +1,13 @@
-This program prints a friendly greeting on the serial console,
-then goes into a loop trying to blink both on board LED's.
+This is a research and experimentation project.
 
-Both LED would blink with this code on the H3 chip, but so
-far the PWR LED (green on port L10) stays off.
+I am trying to solve two problems which may or may not be related.
 
-This gets loaded by U-Boot and is the first bit of bare-metal
-C code I have run on the Orange Pi PC2 (Allwinner H5).
+The first is that I have been unable to get timer interrupts from
+the H5 board.  It is unclear whether the timer is not working or if
+interrupts in general do not work.
+
+The second is that I am unable to manipulate (i.e. blink) the POWER
+led.  This is on the oddball R_GPIO port on bit 10.  I can blink it
+fine on my H3 boards, so why not here?  My guess is that I need to
+do something about clocks on the bus that holds all the "R_"
+peripherals, but nothing is really clear at this point.

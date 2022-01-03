@@ -33,10 +33,13 @@ For the H3 (Orange Pi PC):
 7. inter_kyu - interrupts with timer and GIC with Kyu additions (works)
 
 After this, my efforts have transitioned to getting Kyu to run on
-the Orange Pi, so you should go there next.  I will probably never
-get the "inter_ez" demo to work (but you never know), and expect to
-try to push forwad the second core business with the aid of the Kyu
-infrastructure.  So this project is not expected to get much more
-attention from me, and some things are unfinished.
+the Orange Pi, so you should go there next.
+Both interrupts and multiple core startup are working nicely with
+Kyu now.
+I will probably never get the "inter_ez" demo to work (but you never know),
+and pushing it and the second core business both got done within
+the Kyu framework.
+These projects are not expected to get much more
+attention from me, and some things here are unfinished.
 
-The bootrom is the one thing here that may get further attention.
+The bootrom is the one thing here that could get further attention.

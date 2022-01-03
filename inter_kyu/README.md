@@ -8,7 +8,7 @@ So after a no holds barred hack-job editing session,
 lo and behold it all just works!
 
 So, we have here code that demonstrates using timer
-interrupts on the Allwinner H3 usin the ARM GIC.
+interrupts on the Allwinner H3 using the ARM GIC.
 
 This will be a useful stepping stone towards getting
 Kyu running on the Orange Pi.

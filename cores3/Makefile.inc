@@ -65,7 +65,7 @@ CC = $(CCX) $(COPTS)
 
 # It is a bug that we cannot invoke gcc to do this,
 # but doing this directly gets the job done.
-LD = arm-linux-gnu-ld.bfd
+LD = arm-linux-gnu-ld.bfd --no-warn-rwx-segments
 
 # Should we get this via linux arch/arm/asm/lib ??
 # for LINUX comment this out -----

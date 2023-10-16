@@ -190,8 +190,8 @@ test_reg ( volatile unsigned long *reg )
 }
 #endif
 
-/* This gets called by the test menu
- *   (or something of the sort)
+/* In Kyu, this gets called by the test menu
+ * here this is our "main" or "startup"
  */
 void
 test_core ( void )
@@ -200,6 +200,8 @@ test_core ( void )
 
 	led_init ();
 	serial_init ( 115200 );
+	puts ( "Core demo 3 starting\n" );
+
 	// core_stacks = 0x50000000;
 	// cur_thread = & bogus_thread;
 	// cur_thread = (void *) 0x58000000;

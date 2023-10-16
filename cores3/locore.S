@@ -224,4 +224,7 @@ loopcore:
 
 #endif /* BOARD_ORANGE_PI */
 
+        /* Avoid stupid linker warning */
+        .section        .note.GNU-stack,"",%progbits
+
 /* THE END */

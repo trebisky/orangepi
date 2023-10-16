@@ -48,11 +48,12 @@ do floating point in any of my bare metal projects.
 1. inter_kyu - interrupts with timer and GIC with Kyu additions (works)
 2. float - bare metal floating point with exception handling
 
-The demos below here have not been verified since 2017 so beware.
+The demos below don't work and for one reason or other I have no intentions
+of doing any more work on them.  Revisited in 2023, but not worth investing more time in.
 
 3. cores1 - get a second CPU core to fire up (not working)
 3. cores2 - another attempt at a second core (not working)
-3. cores3 - a simple example, pruned back from Kyu sources (works)
+3. cores3 - a simple example, pruned back from Kyu sources (rarely works)
 3. cores4 - an extension of cores3 with additional experimenting
 6. inter_ez - set up the GIC so we get timer interrupts (not working)
 

@@ -1,5 +1,12 @@
 Cores3
 
+I have tried this in 2023 and never see it work.
+The comments below (from 2017) suggest that it used to work,
+but erratically.  It still has no printf, so I have no intention
+of doing any more work with it.
+
+----------------------------------------------------------
+
 This is a simple demo to start up the other cores on an Orange Pi,
 namely the Allwinner H3 chip.
 

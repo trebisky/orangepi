@@ -166,6 +166,9 @@ main ( void )
 {
 	int reg;
 
+	uart_init ();
+	uart_puts ( "Core 2 demo starting\n" );
+
 	core_stacks = 0x58000000;
 	enable_unaligned ();
 
@@ -200,6 +203,7 @@ main ( void )
 	// test_reg ( PRIVA );
 	// test_reg ( PRIVB );
 
+	uart_puts ( "Core 0 done (returns to spin)\n" );
 }
 
 #ifdef notdef

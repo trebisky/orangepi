@@ -560,4 +560,9 @@ cpu_leave:
 	msr	cpsr, r0
 	bx	lr
 
+#.section  .note.GNU-stack, “”, @progbits
+#.section  .note.GNU-stack, “”, %progbits
+#        .ident  "GCC: (GNU) 13.2.1 20230728 (Red Hat Cross 13.2.1-1)"
+        .section        .note.GNU-stack,"",%progbits
+
 /* THE END */

@@ -257,6 +257,12 @@ main ( void )
 	// uart_puts("Eat more fish!\n");
 	printf ("Eat more fish!\n");
 
+	// XXX 10-2023
+	uart_puts("\n" );
+	for ( ;; ) {
+	    uart_puts("Eat more fish!\n");
+	}
+
 	led_init ();
 	// status_on ();
 	status_off ();

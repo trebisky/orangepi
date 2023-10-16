@@ -34,6 +34,8 @@ TARGET = interrupts.bin
 .S.o:
 	        $(CC) -o $@ -c $<
 
+.c.S:
+	        $(CC) -S $(ARM_ELF_FLAGS) $<
 
 all: install
 
@@ -47,6 +49,7 @@ dump:       interrupts.elf
 
 clean:
 	rm -rf *.bin *.elf *.o *.dump
+	rm -rf interrupts.S
 
 obj:
 	$(CROSS)objdump -h interrupts.o
@@ -55,7 +58,10 @@ version:
 	$(CC) --version
 
 #LINKER = -Wl,-N,--build-id=none
-LINKER = -Wl,--build-id=none
+#LINKER = -Wl,--build-id=none
+LINKER = -Wl,--build-id=none -Wl,--no-warn-rwx-segments
 
 interrupts.elf: $(OBJS)
 	$(CC) -o $@ -nostdlib $(OBJS) -T basic.lds $(LINKER) $(LIBS)
+
+# THE END

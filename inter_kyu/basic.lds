@@ -4,7 +4,7 @@ SECTIONS
 	.start    : { *(.start) }
 	.text     : { *(.text) }
 
-_etext = .;                   /* End of text section */
+	_etext = .;           /* End of text section */
 
 	/DISCARD/ : { *(.dynstr*) }
 	/DISCARD/ : { *(.dynamic*) }
@@ -13,7 +13,7 @@ _etext = .;                   /* End of text section */
 	/DISCARD/ : { *(.gnu*) }
 	/DISCARD/ : { *(.note*) }
 
-  .rodata : { *(.rodata) *(.rodata.*) }
+        .rodata : { *(.rodata) *(.rodata.*) }
 
 	.data : {                     /* Data */
             *(.data)

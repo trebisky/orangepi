@@ -19,7 +19,7 @@ TARGET = hello.bin
 all: install
 
 install: $(TARGET)
-	cp $(TARGET) /var/lib/tftpboot/orange
+	cp $(TARGET) /var/lib/tftpboot/orange.bin
 
 DUMP = arm-linux-gnu-objdump -d
 
@@ -32,5 +32,8 @@ clean:
 version:
 	$(CROSS_CC) --version
 
+# Without this, we get stupid warnings:
+LFLAGS = -Wl,--build-id=none -Wl,--no-warn-rwx-segments
+
 hello.elf: hello.c
-	$(CROSS_CC) -g $(ARM_ELF_FLAGS) $< -nostdlib -o $@ -T simple.lds -Wl,-N
+	$(CROSS_CC) -g $(LFLAGS) $(ARM_ELF_FLAGS) $< -nostdlib -o $@ -T simple.lds -Wl,-N

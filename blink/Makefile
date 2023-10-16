@@ -19,7 +19,7 @@ TARGET = blink.bin
 all: install
 
 install: $(TARGET)
-	cp $(TARGET) /var/lib/tftpboot/orange
+	cp $(TARGET) /var/lib/tftpboot/orange.bin
 
 DUMP = arm-linux-gnu-objdump -d
 
@@ -32,5 +32,9 @@ clean:
 version:
 	$(CROSS_CC) --version
 
+# Without this, we get this senseless warning:
+# /usr/bin/arm-linux-gnu-ld: warning: .note.gnu.build-id section discarded, --build-id ignored
+LFLAGS = -Wl,--build-id=none -Wl,--no-warn-rwx-segments
+
 blink.elf: blink.c
-	$(CROSS_CC) -g $(ARM_ELF_FLAGS) $< -nostdlib -o $@ -T simple.lds -Wl,-N
+	$(CROSS_CC) -g $(ARM_ELF_FLAGS) $(LFLAGS) $< -nostdlib -o $@ -T simple.lds -Wl,-N

@@ -15,7 +15,8 @@ I have not invested much time in this (or needed to).
 
 For lots of notes and supporting information, see my website:
 
-http://cholla.mmto.org/orange_pi/
+1. http://cholla.mmto.org/orange_pi/
+2. http://cholla.mmto.org/orange_pi/pc_h3/
 
 ============
 
@@ -24,33 +25,40 @@ again in 2023.  I had to do some updating to get things to build
 without warnings with new gnu cross compile tools.
 Also my tftp boot setup on the Orange Pi PC was loading to
 0x4000_0000 and some of the old demos linked for 0x4200_000.
-I needed to change the demos to link for the same address they
-load to.
+I needed to change many of the demos to link to the 0x4000_0000 address.
 
-If you want to follow my work in order, take them like this.
-For the H3 (Orange Pi PC):
+This first group of demos have no assembly language startup file.
+The first two link to address zero and rely on the compiler
+producing position independent code entirely.
+
+In order of increasing complexity (and more or less the order in which I
+developed them) they are:
 
 1. hello - just send output to the serial port, no assembly startup.
 1. blink - blink both on board LED's and write to serial port
 2. float - bare metal floating point
 2. print - partition files and add a printf
+5. timer - get a timer running (but not yet interrupting)
+
+The next demo was added much later after a lot of work had been done
+in Kyu, pulling debugged modules from the Kyu code base:
+
+7. inter_kyu - interrupts with timer and GIC with Kyu additions (works)
 
 The demos below here have not been verified since 2017 so beware.
 
-3. cores1 - get a second CPU core to fire up (not yet working)
-3. cores2 - another attempt at a second core (not yet working)
-3. cores3 - a simple example that does work, pruned back from Kyu sources
+3. cores1 - get a second CPU core to fire up (not working)
+3. cores2 - another attempt at a second core (not working)
+3. cores3 - a simple example, pruned back from Kyu sources (works)
 3. cores4 - an extension of cores3 with additional experimenting
-5. timer - get a timer running (but not yet interrupting)
-6. inter_ez - set up the GIC so we get timer interrupts (has problems)
-7. inter_kyu - interrupts with timer and GIC with Kyu additions (works)
+6. inter_ez - set up the GIC so we get timer interrupts (not working)
 
 In 2017, I stopped working on these demos.
 My efforts transitioned to getting Kyu to run on
 the Orange Pi, with general success.
 Both interrupts and multiple core startup work nicely with Kyu.
 
-I will probably never get the "inter_ez" demo to work (but you never know).
+I may never get the "inter_ez" demo to work (but you never know).
 
 Some things here are unfinished (and not working) and are unlikely to
 get further attention in this context.

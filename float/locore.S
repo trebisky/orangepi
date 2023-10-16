@@ -174,6 +174,9 @@ fp_enable:
         fmxr    fpexc,r0
         mov     pc, lr
 
+	@ avoid stupid linker warning
+        .section        .note.GNU-stack,"",%progbits
+
 
 
 /* THE END */

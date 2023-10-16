@@ -145,6 +145,13 @@ uart_gpio_init ( void )
 #endif
 }
 
+/* ----------------------- */
+
+/* These are in start.S */
+void red_on ( void );
+void red_off ( void );
+void delay_asm ( void );
+
 void
 led_init ( void )
 {
@@ -362,16 +369,17 @@ main ( void )
 	led_init ();
 
 	uart_puts("\n" );
-	uart_puts("Eat more fish!\n");
+	uart_puts("Try to launch another core\n");
 
 	// launch ( blink_red );
 	launch_core ( 1, blink_red );
-	uart_puts(".... Blinking\n");
+
+	uart_puts("core 0 .... Blinking green\n");
 	// blink_asm ();
 	// blink_red2 ();
 	blink_green ();
 
-	uart_puts(" .. Spinning\n");
+	uart_puts("core 0 .. Spinning\n");
 
 	/* spin */
 	for ( ;; )

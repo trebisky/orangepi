@@ -31,19 +31,22 @@ This first group of demos have no assembly language startup file.
 The first two link to address zero and rely on the compiler
 producing position independent code entirely.
 
-In order of increasing complexity (and more or less the order in which I
-developed them) they are:
+These first 4 just have C code, no assembly startup or interrupts.
+Here they are in order of increasing complexity.
 
 1. hello - just send output to the serial port, no assembly startup.
 1. blink - blink both on board LED's and write to serial port
-2. float - bare metal floating point
 2. print - partition files and add a printf
 5. timer - get a timer running (but not yet interrupting)
 
-The next demo was added much later after a lot of work had been done
-in Kyu, pulling debugged modules from the Kyu code base:
+The next two add an assembly startup and exception handling.
+The "inter_kyu" was added after I had done a lot of work in Kyu
+and wanted to revisit getting interrupts to work.
+The "float" was just a curiosity exercise since I never try to
+do floating point in any of my bare metal projects.
 
-7. inter_kyu - interrupts with timer and GIC with Kyu additions (works)
+1. inter_kyu - interrupts with timer and GIC with Kyu additions (works)
+2. float - bare metal floating point with exception handling
 
 The demos below here have not been verified since 2017 so beware.
 

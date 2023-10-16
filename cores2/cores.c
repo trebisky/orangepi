@@ -193,8 +193,8 @@ main ( void )
 
 	// printf ( "Address of core stacks: %08x\n", core_stacks );
 	test_one ( 1 );
-	test_one ( 2 );
-	test_one ( 3 );
+	// test_one ( 2 );
+	// test_one ( 3 );
 
 	// test_reg ( ROM_START );
 	// test_reg ( PRIVA );

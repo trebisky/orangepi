@@ -1,6 +1,6 @@
 SECTIONS
 {
-	. = 0x42000000;
+	. = 0x40000000;
 	.start    : { *(.start) }
 	.text     : { *(.text) }
 	/DISCARD/ : { *(.dynstr*) }
@@ -10,7 +10,3 @@ SECTIONS
 	/DISCARD/ : { *(.gnu*) }
 	/DISCARD/ : { *(.note*) }
 }
-
-/*
-.note.gnu.build-id section discarded, --build-id ignored.
-*/

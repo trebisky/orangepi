@@ -58,7 +58,7 @@ version:
 	$(CC) --version
 
 #LINKER = -Wl,-N,--build-id=none
-LINKER = -Wl,--build-id=none
+LINKER = -Wl,--build-id=none -Wl,--no-warn-rwx-segments
 
 cores.elf: $(OBJS)
 	$(CC) -o $@ -nostdlib $(OBJS) -T basic.lds $(LINKER) $(LIBS)

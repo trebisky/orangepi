@@ -67,4 +67,7 @@ loopcore:
         str     r0, [r1]
         b      loopcore
 
+	/* Avoid stupid linker warning */
+        .section        .note.GNU-stack,"",%progbits
+
 /* THE END */

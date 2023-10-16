@@ -78,10 +78,16 @@ arm_float ( void )
 {
         int val;
         int num = 2;
+	double fval = 5.0;
+
+	fval /= 3.0;
+	val = fval * 10000;
+	print_num ( "5/3 is:", val );
 
         val = sqrt_i ( num );
         // printf ( "Square root of %d is %d\n", num, val );
 	print_num ( "Square root is:", val );
+
         val = sqrt_d ( num );
         // printf ( "Square root of %d is %d\n", num, val );
 	print_num ( "Square root is:", val );

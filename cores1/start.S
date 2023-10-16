@@ -59,5 +59,8 @@ loop:	sub	r3, r3, #1
 	cmp	r3, #0
 	bne	loop
 	bx	lr
+
+	/* avoid stupid linker warning */
+        .section        .note.GNU-stack,"",%progbits
     
 /* THE END */

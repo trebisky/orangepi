@@ -5,6 +5,8 @@
 
 void main ( void );
 
+void printf ( char *, ... );
+
 /* Since we don't have an assembly language startup or a clever LDS script,
  * we rely on this being at the start of the linked code and being
  * the first thing executed.  Note that we simply use the stack handed
@@ -98,6 +100,7 @@ main ( void )
 	uart_init();
 
 	uart_puts("\n" );
+
 	// uart_puts("Eat more fish!\n");
 	printf ("Eat more fish!\n");
 
@@ -112,7 +115,6 @@ main ( void )
 	/* spin */
 	for ( ;; )
 	    ;
-
 }
 
 /* THE END */

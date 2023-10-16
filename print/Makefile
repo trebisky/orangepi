@@ -11,11 +11,14 @@ LIBS = -L /usr/lib/gcc/arm-linux-gnueabi/$(GCCVERSION) -lgcc
 #ARM_ELF_FLAGS = -Os -marm -fpic -Wall
 #ARM_ELF_FLAGS = -marm -fpic -Wall
 #ARM_ELF_FLAGS = -O2 -marm -fpic -Wall
-ARM_ELF_FLAGS = -O2 -marm -Wall
+#ARM_ELF_FLAGS = -O2 -marm -Wall
+#ARM_ELF_FLAGS = -O2 -marm
+ARM_ELF_FLAGS = -marm
 
 ARM_ELF_FLAGS += -fno-common -fno-builtin -ffreestanding -nostdinc -fno-strict-aliasing
 ARM_ELF_FLAGS += -mno-thumb-interwork -fno-stack-protector -fno-toplevel-reorder
 ARM_ELF_FLAGS += -Wstrict-prototypes -Wno-format-nonliteral -Wno-format-security
+ARM_ELF_FLAGS += -Wno-implicit-function-declaration
 ARM_ELF_FLAGS += -Wno-unused-function $(ABI)
 
 
@@ -33,7 +36,7 @@ TARGET = print.bin
 all: install
 
 install: $(TARGET)
-	cp $(TARGET) /var/lib/tftpboot/orange
+	cp $(TARGET) /var/lib/tftpboot/orange.bin
 
 DUMP = arm-linux-gnu-objdump -d
 
@@ -50,7 +53,7 @@ version:
 	$(CC) --version
 
 #LINKER = -Wl,-N,--build-id=none
-LINKER = -Wl,--build-id=none
+LINKER = -Wl,--build-id=none -Wl,--no-warn-rwx-segments
 
 print.elf: $(OBJS)
 	$(CC) -o $@ -nostdlib $(OBJS) -T basic.lds $(LINKER) $(LIBS)

@@ -18,7 +18,7 @@ For lots of notes and supporting information, see my website:
 1. http://cholla.mmto.org/orange_pi/
 2. http://cholla.mmto.org/orange_pi/pc_h3/
 
-============
+***
 
 I did most of this work back in 2017, but I decided to revisit it
 again in 2023.  I had to do some updating to get things to build
@@ -48,6 +48,12 @@ do floating point in any of my bare metal projects.
 2. float - bare metal floating point with exception handling from Kyu
 3. inter_ez - set up the GIC so we get timer interrupts (works)
 1. inter_kyu - interrupts with timer and GIC with Kyu additions (works)
+
+And here are some new things for 2023
+
+1. cpu - check what speed the CPU runs at from U-Boot
+
+***
 
 The demos below don't work and for one reason or other I have no intentions
 of doing any more work on them.  Revisited in 2023, but not worth investing more time in.

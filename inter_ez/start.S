@@ -32,17 +32,15 @@ _startup:
 	// ldr sp, =0x48ff0000
 	ldr sp, =0x50000000
 
+	/* set up a stack pointer */
+	//movw	sp, #0
+	//movt	sp, #0x5000
+
 	/* set the vector base */
         // movw    r0, #:lower16:vectors
         // movt    r0, #:upper16:vectors
 	ldr r0, =vectors
         mcr     p15, 0, r0, c12, c0, 0
-
-	/* set up a stack pointer */
-	// movw	sp, #0
-	// movt	sp, #0x4fff
-	movw	sp, #0
-	movt	sp, #0x5000
 
 	bl	main
 

@@ -20,7 +20,7 @@ ARM_ELF_FLAGS += -Wstrict-prototypes -Wno-format-nonliteral -Wno-format-security
 ARM_ELF_FLAGS += -Wno-unused-function $(ABI)
 
 
-OBJS = start.o interrupts.o prf.o serial.o gpio.o timer.o gic.o
+OBJS = start.o main.o prf.o serial.o gpio.o timer.o gic.o
 
 TARGET = interrupts.bin
 
@@ -37,7 +37,7 @@ TARGET = interrupts.bin
 all: install
 
 install: $(TARGET)
-	cp $(TARGET) /var/lib/tftpboot/orange
+	cp $(TARGET) /var/lib/tftpboot/orange.bin
 
 DUMP = arm-linux-gnu-objdump -d
 
@@ -54,7 +54,7 @@ version:
 	$(CC) --version
 
 #LINKER = -Wl,-N,--build-id=none
-LINKER = -Wl,--build-id=none
+LINKER = -Wl,--build-id=none -Wl,--no-warn-rwx-segments
 
 interrupts.elf: $(OBJS)
 	$(CC) -o $@ -nostdlib $(OBJS) -T basic.lds $(LINKER) $(LIBS)

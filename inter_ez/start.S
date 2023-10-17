@@ -22,21 +22,28 @@ _startup:
 	;@//mov r0, #(PSR_IRQ_MODE|PSR_FIQ_DIS|PSR_IRQ_DIS)
 	mov r0,#0xD2
 	msr cpsr_c, r0
-	ldr sp, =0x4fff0000
+	// ldr sp, =0x4fff0000
+	ldr sp, =0x58000000
 
+	/* Set up the regular stack */
 	;@//mov r0, #(PSR_SVC_MODE|PSR_FIQ_DIS|PSR_IRQ_DIS)
 	mov r0,#0xD3
 	msr cpsr_c, r0
-	ldr sp, =0x48ff0000
+	// ldr sp, =0x48ff0000
+	ldr sp, =0x50000000
 
 	/* set the vector base */
-        movw    r0, #:lower16:vectors
-        movt    r0, #:upper16:vectors
+        // movw    r0, #:lower16:vectors
+        // movt    r0, #:upper16:vectors
+	ldr r0, =vectors
         mcr     p15, 0, r0, c12, c0, 0
 
 	/* set up a stack pointer */
+	// movw	sp, #0
+	// movt	sp, #0x4fff
 	movw	sp, #0
-	movt	sp, #0x4fff
+	movt	sp, #0x5000
+
 	bl	main
 
         .align  5
@@ -80,19 +87,41 @@ reset:
 irqX:
 	subs	pc,lr,#4
 
+#ifdef notdef
+/* This "works" - we get one interrupt, then
+ * disable interrupts altogether.
+ */
+irqONE:
+	bl	red_on
+        mrs     r0, spsr
+        orr     r0, r0, #0x80
+        msr     spsr, r0
+	subs	pc,lr,#4
+
+/* Try something in 2023
+ * like "irqX" above we lock up in a hard
+ * interrupt loop since we don't clear the
+ * interrupt.
+ */
+irqY:
+	push	{r0, r1}
+	/* -- */
+	pop	{r0, r1}
+	subs	pc,lr,#4
+
+#endif
+
+/* This works, for a while ... */
+// irq_2017:
 irq:
 	stmfd	sp!,{r0-r12,lr}
 	dmb
 	bl	gic_handler
 	dmb
 	ldmfd	sp!,{r0-r12,lr}
-	subs	pc,lr,#4
-
-irqXX:
-	bl	red_on
-        mrs     r0, spsr
-        orr     r0, r0, #0x80
-        msr     spsr, r0
+	// The following instruction is magic
+	// it also switches back from I mode to
+	// whatever mode preceded the interrupt.
 	subs	pc,lr,#4
 
         .globl enable_irq
@@ -156,5 +185,8 @@ loop:	sub	r3, r3, #1
 	cmp	r3, #0
 	bne	loop
 	bx	lr
-    
+
+	/* Avoid stupid linker warning */
+        .section        .note.GNU-stack,"",%progbits
+
 /* THE END */

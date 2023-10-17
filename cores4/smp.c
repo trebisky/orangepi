@@ -318,8 +318,8 @@ fail ( void )
 	puts ( "All done failing.\n" );
 }
 
-/* This gets called by the test menu
- *   (or something of the sort)
+/* This would get called by the Kyu test menu
+ *  here is is our "main" or "startup"
  */
 void
 test_core ( void )

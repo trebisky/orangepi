@@ -4,6 +4,8 @@
  * Tom Trebisky  12-22-2016
  */
 
+#include "protos.h"
+
 #define UART0_BASE	0x01C28000
 #define UART_BASE	((struct h3_uart *) UART0_BASE)
 

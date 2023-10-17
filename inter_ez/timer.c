@@ -3,7 +3,7 @@
  * Tom Trebisky  12-30-2016
  */
 
-void printf ( char *, ... );
+#include "protos.h"
 
 int timer_count;
 
@@ -127,6 +127,8 @@ timer_handler ( void )
 {
 	timer_count++;
 	timer_ack ();
+
+	led_toggle ();
 }
 
 void

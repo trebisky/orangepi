@@ -127,6 +127,8 @@ led_init ( void )
 	gpio_config ( GPIO_A, 15, GPIO_OUTPUT );
 }
 
+/* Green LED */
+
 void
 led_on ( void )
 {
@@ -139,6 +141,22 @@ led_off ( void )
 	gpio_output ( GPIO_L, 10, 0 );
 }
 
+static int l_status = 0;
+
+void
+led_toggle ( void )
+{
+	if ( l_status ) {
+	    l_status = 0;
+	    led_off ();
+	} else {
+	    l_status = 1;
+	    led_on ();
+	}
+}
+
+/* Red LED */
+
 void
 status_on ( void )
 {
@@ -149,6 +167,20 @@ void
 status_off ( void )
 {
 	gpio_output ( GPIO_A, 15, 0 );
+}
+
+static int s_status = 0;
+
+void
+status_toggle ( void )
+{
+	if ( s_status ) {
+	    s_status = 0;
+	    status_off ();
+	} else {
+	    s_status = 1;
+	    status_on ();
+	}
 }
 
 /* XXX XXX this CCM stuff doesn't belong here,

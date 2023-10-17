@@ -6,6 +6,8 @@
  * Tom Trebisky  1-4-2017
  */
 
+#include "protos.h"
+
 /* The H3 defines 157 interrupts (0-156)
  * We treat this as 160, more or less
  */
@@ -112,8 +114,12 @@ gic_handler ( void )
 {
 	struct h3_gic_cpu *cp = GIC_CPU_BASE;
 	int irq;
+	//int cur_sp;
 
 	irq = cp->iack;
+
+	//asm volatile ("add %0, sp, #0" : "=r"(cur_sp) );
+	//printf ( "GIC: sp = %08x\n", cur_sp );
 
 	/* Do we need to EOI the spurious ? */
 	if ( irq == 1023 ) {

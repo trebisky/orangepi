@@ -37,7 +37,7 @@ Here they are in order of increasing complexity.
 1. hello - just send output to the serial port, no assembly startup.
 1. blink - blink both on board LED's and write to serial port
 2. print - partition files and add a printf
-5. timer - get a timer running (but not yet interrupting)
+5. timer - get a timer running, add printf (not yet interrupting)
 
 The next two add an assembly startup and exception handling.
 The "inter_kyu" was added after I had done a lot of work in Kyu
@@ -45,8 +45,9 @@ and wanted to revisit getting interrupts to work.
 The "float" was just a curiosity exercise since I never try to
 do floating point in any of my bare metal projects.
 
+2. float - bare metal floating point with exception handling from Kyu
+3. inter_ez - set up the GIC so we get timer interrupts (works)
 1. inter_kyu - interrupts with timer and GIC with Kyu additions (works)
-2. float - bare metal floating point with exception handling
 
 The demos below don't work and for one reason or other I have no intentions
 of doing any more work on them.  Revisited in 2023, but not worth investing more time in.
@@ -54,15 +55,10 @@ of doing any more work on them.  Revisited in 2023, but not worth investing more
 3. cores1 - get a second CPU core to fire up (not working)
 3. cores2 - another attempt at a second core (not working)
 3. cores3 - a simple example, pruned back from Kyu sources (rarely works)
-3. cores4 - an extension of cores3 with additional experimenting
-6. inter_ez - set up the GIC so we get timer interrupts (not working)
+3. cores4 - an extension of cores3 with additional experimenting (not working)
 
-In 2017, I stopped working on these demos.
-My efforts transitioned to getting Kyu to run on
-the Orange Pi, with general success.
+In 2017, I stopped working on these demos and move my attention
+to getting Kyu to run on the Orange Pi, with general success.
 Both interrupts and multiple core startup work nicely with Kyu.
 
-I may never get the "inter_ez" demo to work (but you never know).
-
-Some things here are unfinished (and not working) and are unlikely to
-get further attention in this context.
+The "cores" demos will get not further attention in their current form.

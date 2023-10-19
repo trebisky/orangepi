@@ -24,15 +24,13 @@ I did most of this work back in 2017, but I decided to revisit it
 again in 2023.  I had to do some updating to get things to build
 without warnings with new gnu cross compile tools.
 Also my tftp boot setup on the Orange Pi PC was loading to
-0x4000_0000 and some of the old demos linked for 0x4200_000.
+0x4000_0000 and some of the old demos linked for 0x4200_0000.
 I needed to change many of the demos to link to the 0x4000_0000 address.
 
 This first group of demos have no assembly language startup file.
+Just C code from the very start.
 The first two link to address zero and rely on the compiler
 producing position independent code entirely.
-
-These first 4 just have C code, no assembly startup or interrupts.
-Here they are in order of increasing complexity.
 
 1. hello - just send output to the serial port, no assembly startup.
 1. blink - blink both on board LED's and write to serial port
@@ -51,7 +49,13 @@ do floating point in any of my bare metal projects.
 
 And here are some new things for 2023
 
-1. cpu - check what speed the CPU runs at from U-Boot
+1. cpu - check what speed the CPU runs at from U-Boot .. and more!
+
+It is important to point out that after doing a number of these little
+projects back in 2017, I shifted my attention to getting Kyu to run on
+the Orange Pi, with general success.
+Both interrupts and multiple core startup work nicely with Kyu,
+and the bulk of my Orange Pi work will be found in the Kyu project code.
 
 ***
 
@@ -63,8 +67,3 @@ of doing any more work on them.  Revisited in 2023, but not worth investing more
 3. cores3 - a simple example, pruned back from Kyu sources (rarely works)
 3. cores4 - an extension of cores3 with additional experimenting (not working)
 
-In 2017, I stopped working on these demos and move my attention
-to getting Kyu to run on the Orange Pi, with general success.
-Both interrupts and multiple core startup work nicely with Kyu.
-
-The "cores" demos will get not further attention in their current form.

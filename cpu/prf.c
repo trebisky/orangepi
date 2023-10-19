@@ -66,6 +66,14 @@ shex8( char *buf, char *end, int val )
 	return shex2(buf,end,val);
 }
 
+static char *
+shex16( char *buf, char *end, long long val )
+{
+	buf = shex8(buf,end,val>>32);
+	PUTCHAR( '_' );
+	return shex8(buf,end,val & 0xffffffff);
+}
+
 #define VSNPRINTF	vsnprintf
 
 static int VSNPRINTF (char *, unsigned int, const char *, va_list );
@@ -270,6 +278,10 @@ VSNPRINTF (char *abuf, unsigned int size, const char *fmt, va_list args)
 	    fmt++;
 	}
 
+#ifdef notdef
+	/* 10-2023 - see below
+	 * I am stealing this for 64 bit display
+	 */
 	/* Ignore this too,
 	 * Z and z prefix are for size_t and
 	 * tend to come as %Zd.
@@ -279,6 +291,7 @@ VSNPRINTF (char *abuf, unsigned int size, const char *fmt, va_list args)
 	    long_flag = 0;
 	    fmt++;
 	}
+#endif
 
 	/* format ended early.
 	 */
@@ -306,6 +319,11 @@ VSNPRINTF (char *abuf, unsigned int size, const char *fmt, va_list args)
 		buf = sprintn(buf,end,va_arg(args,int), 16);
 		*/
 	    }
+	    break;
+
+	/* Added 10-18-2023 for 64 bit "long long" */
+	case 'z': case 'Z':
+	    buf = shex16(buf,end,va_arg(args,long long));
 	    break;
 
 	case 'd': case 'D':

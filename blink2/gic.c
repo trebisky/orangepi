@@ -50,7 +50,7 @@ struct h3_gic_dist {
 	vu32 config[NUM_CONFIG];	/* 0xc00 */
 	int __pad77[54];
 	vu32 status[NUM_STATUS];	/* 0xd00 - ISR */
-	int __pad8[118];
+	int __pad8[112];
 	vu32 soft;		/* 0xf00 */
 };
 
@@ -101,9 +101,10 @@ gic_show_status ( void )
 	int i;
 
 	printf ( "GIC base = %08x\n", gp );
-	printf ( "GIC soft = %08x\n", &gp->soft );
 	printf ( "GIC config = %08x\n", &gp->config[0] );
 	printf ( "GIC status = %08x\n", &gp->status[0] );
+	printf ( "GIC soft = %08x\n", &gp->soft );
+
 	off = (u32) &gp->soft;
 	off -= (u32) gp;
 	printf ( "GIC off soft = %08x\n", off );
@@ -133,6 +134,8 @@ gic_unpend ( int irq )
 	gp->pclear[x] = mask;
 }
 
+static int first = 1;
+
 void
 gic_handler ( void )
 {
@@ -151,6 +154,20 @@ gic_handler ( void )
 	    serial_putc ( '\n' );
 	    // return;
 	}
+
+	if ( first ) {
+	    printf ( "In gic_handler\n" );
+	    gic_show_status ();
+	    first = 0;
+	}
+	/* The above shows:
+	 * (handling IRQ_TIMER1 = 51)
+	 * indeed the "8" is bit 51.
+	 * We always see the "1" (in bit 32)
+	 * IRQ 32 is UART0 ...
+	ISR 0: 00000000
+	ISR 1: 00080001
+	 */
 
 	if ( irq == IRQ_TIMER0 )
 	    timer_handler ( 0 );

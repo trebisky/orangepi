@@ -50,12 +50,14 @@ do floating point in any of my bare metal projects.
 And here are some new things for 2023
 
 1. cpu - check what speed the CPU runs at from U-Boot .. and more!
+2. blink2 - blink LEDs using timer and interrupts
 
 It is important to point out that after doing a number of these little
 projects back in 2017, I shifted my attention to getting Kyu to run on
 the Orange Pi, with general success.
 Both interrupts and multiple core startup work nicely with Kyu,
 and the bulk of my Orange Pi work will be found in the Kyu project code.
+Now in 2023 I am returning to these with much greater knowledge.
 
 ***
 

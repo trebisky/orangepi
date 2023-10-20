@@ -24,6 +24,7 @@ void serial_putc ( char );
 void timer_init ( int, int );
 void timer_handler ( int );
 void led_handler ( void );
+void uart_handler ( void );
 
 /* At one time I had a bad habit of using "long"
  * for 32 bit values.  This is fine with arm32,

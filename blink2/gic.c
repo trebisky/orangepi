@@ -175,6 +175,11 @@ gic_handler ( void )
 	if ( irq == IRQ_TIMER1 )
 	    timer_handler ( 1 );
 
+	if ( irq == IRQ_UART0 ) {
+	    printf ( "Uart interrupt\n" );
+	    uart_handler ();
+	}
+
 	cp->eoi = irq;
 	// gic_unpend ( IRQ_TIMER0 );
 	gic_unpend ( irq );
@@ -230,6 +235,9 @@ gic_init ( void )
 	/* Allow either timer */
 	gic_enable ( IRQ_TIMER0 );
 	gic_enable ( IRQ_TIMER1 );
+
+	/* Someday we will want this */
+	gic_enable ( IRQ_UART0 );
 
 	gp->ctrl = G0_ENABLE;
 

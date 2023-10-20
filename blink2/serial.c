@@ -10,13 +10,21 @@
 #define UART_BASE	((struct h3_uart *) UART0_BASE)
 
 struct h3_uart {
-	volatile unsigned int data;	/* 00 - Rx/Tx data */
-	volatile unsigned int ier;	/* 04 - interrupt enables */
-	volatile unsigned int iir;	/* 08 - interrupt ID / FIFO control */
-	volatile unsigned int lcr;	/* 0c - line control */
-	volatile unsigned int mcr;	/* 10 - modem control */
-	volatile unsigned int lsr;	/* 14 - line status */
-	volatile unsigned int msr;	/* 18 - modem status */
+	vu32 data;	/* 00 - Rx/Tx data */
+	vu32 ier;	/* 04 - interrupt enables */
+	vu32 iir;	/* 08 - interrupt ID / FIFO control */
+	vu32 lcr;	/* 0c - line control */
+	vu32 mcr;	/* 10 - modem control */
+	vu32 lsr;	/* 14 - line status */
+	vu32 msr;	/* 18 - modem status */
+	vu32 scr;       /* 1c - scratch register */
+        int _pad0[23];
+        vu32 stat;      /* 7c - uart status */
+        vu32 flvl;      /* 80 - fifo level */
+        vu32 rfl;       /* 84 - RFL */
+        int _pad1[7];
+        vu32 halt;      /* A4 - Tx halt */
+
 };
 
 #define divisor_msb	ier
@@ -53,6 +61,13 @@ struct h3_uart {
 
 #define LCR_DLAB	0x80	/* divisor latch access bit */
 
+#define IIR_MODEM       0x0     /* modem status, clear by reading modem status */
+#define IIR_NONE        0x1     /* why isn't "none" zero ? */
+#define IIR_TXE         0x2     /* THR empty, clear by reading IIR or write to THR */
+#define IIR_RDA         0x4     /* rcvd data available, clear by reading it. */
+#define IIR_LINE        0x6     /* line status, clear by reading line status. */
+#define IIR_BUSY        0x7     /* busy detect, clear by reading modem status. */
+
 /* 8 bits, no parity, 1 stop bit */
 #define LCR_SETUP	LCR_DATA_8
 
@@ -75,7 +90,29 @@ serial_init ( void )
 
 	up->lcr = LCR_SETUP;
 
-	up->ier = IE_RDA | IE_TXE;
+	// Why do this if we aren't using interrupts?
+	// up->ier = IE_RDA | IE_TXE;
+}
+
+/* Called at interrupt level */
+void
+uart_handler ( void )
+{
+	struct h3_uart *up = UART_BASE;
+	int iir;
+	int stat;
+
+	iir = up->iir & 0xf;
+
+	/* On every startup, one of these is pending.
+	 * The only way to clear it seems to be to
+	 * do this -- handle the interrupt and then
+	 * reading the status register clears it
+	 */
+	if ( iir == IIR_BUSY ) {
+	    stat = up->stat;
+	    printf ( "Uart BUSY interrupt\n" );
+	}
 }
 
 void

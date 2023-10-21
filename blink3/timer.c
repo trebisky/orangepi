@@ -91,6 +91,8 @@ timer_init ( int who, int hz )
 	struct h3_timer *hp = TIMER_BASE;
 	struct tregs *tp;
 
+	printf ( "Timer init\n" );
+
 	tp = &hp->regs[who];
 
 	tp->ctrl = 0;	/* stop the timer */
@@ -118,6 +120,36 @@ timer_init ( int who, int hz )
 	printf ("  Timer C val: %08x\n", hp->t0_cval );
 	printf ("  Timer C val: %08x\n", hp->t0_cval );
 	*/
+}
+
+/* One shot, delay in milliseconds */
+void
+timer_one ( int who, int delay )
+{
+	struct h3_timer *hp = TIMER_BASE;
+	struct tregs *tp;
+
+	printf ( "Timer one\n" );
+
+	tp = &hp->regs[who];
+
+	tp->ctrl = 0;	/* stop the timer */
+
+	if ( who == 0 ) {
+	    hp->irq_ena = ENA_T0;
+	} else {
+	    hp->irq_ena = ENA_T1;
+	}
+
+	tp->ival = CLOCK_24M_MS * delay;
+
+	tp->ctrl = CTL_SRC_24M | CTL_SINGLE;
+	tp->ctrl |= CTL_RELOAD;
+
+	while ( tp->ctrl & CTL_RELOAD )
+	    ;
+
+	tp->ctrl |= CTL_ENABLE;
 }
 
 #ifdef notdef
@@ -151,28 +183,18 @@ timer_ack ( int who )
 	    hp->irq_status = ENA_T1;
 }
 
-static int first = 1;
-
 /* Called at interrupt level
  * "who" is 0 or 1
+ * This is specifi to the fancy blink
+ * being done in the blink2 demo,
+ * see led_handler() for details.
  */
 void
 timer_handler ( int who )
 {
-	if ( who == 0 ) {
-	    timer_count++;
-	    timer_ack ( who );
-
-	    led_handler ( 999 );
-	    return;
-	}
-
-	if ( first )
-	    printf ( "Timer 1 interrupt\n" );
-	first = 0;
-
+	printf ( "Timer handler\n" );
 	timer_ack ( who );
-	led_handler ( 999 );
+	led_handler ( who );
 }
 
 #ifdef notdef

@@ -145,6 +145,8 @@ gic_handler ( void )
 
 	irq = cp->iack;
 
+	printf ( "GIC handler %d\n", irq );
+
 	//asm volatile ("add %0, sp, #0" : "=r"(cur_sp) );
 	//printf ( "GIC: sp = %08x\n", cur_sp );
 
@@ -155,7 +157,6 @@ gic_handler ( void )
 	    // return;
 	}
 
-#ifdef notdef
 	if ( first ) {
 	    printf ( "In gic_handler\n" );
 	    gic_show_status ();
@@ -166,12 +167,9 @@ gic_handler ( void )
 	 * indeed the "8" is bit 51.
 	 * We always see the "1" (in bit 32)
 	 * IRQ 32 is UART0 ...
-	 * The UART always does this (has an interrupt
-	 * pending when it first starts up).
 	ISR 0: 00000000
 	ISR 1: 00080001
 	 */
-#endif
 
 	if ( irq == IRQ_TIMER0 )
 	    timer_handler ( 0 );
@@ -202,6 +200,8 @@ gic_init ( void )
 	struct h3_gic_cpu *cp = GIC_CPU_BASE;
 	unsigned long *p;
 	int i;
+
+	printf ( "GIC init\n" );
 
 #ifdef notdef
 	p = (unsigned long *) & gp->target;

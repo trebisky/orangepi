@@ -11,15 +11,3 @@ the timer (for 51 when using timer 1) and for
 the uart.  This could be useful for identifying
 the IRQ of unknown interrupts sources
 (perhaps the GTIMER?).
-
-***
-
-This demo works, but there is a lurking problem.
-I had erratic results with inter_ez, from which this
-is derived.  Then inter_ez mysteriously began to work.
-I copied that to this, then suddenly this one stopped
-working after I made some changes.  I copied it to "blink3"
-for further work, then restored this one to a working state.
-
-Beware.
-

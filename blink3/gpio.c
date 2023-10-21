@@ -14,6 +14,8 @@
 #define GPIO_I    8
 #define GPIO_L    9	/* R_PIO */
 
+#include "protos.h"
+
 struct h3_gpio {
 	volatile unsigned long config[4];
 	volatile unsigned long data;
@@ -190,22 +192,57 @@ status_toggle ( void )
 	}
 }
 
-/* Initialize things so lights blink in
- * alternation.
+/* This is the "heart" of the blink2 demo.
+ * The idea is to let timer 0 run continuously,
+ * and it is it's job to start each blink.
+ * timer 1 determines the duration of the blink
+ * turning it off when done.
+ * We blink the two LED in alternation.
  */
+
+#define DURATION	200
+
+static int led_state = 0;
+
 static void
 led_setup ( void )
 {
-	s_status = 0;
-	l_status = 1;
+	printf ( "LED setup called\n" );
+	led_on ();
+	status_off ();
+	led_state = 0;
+
+	/* 2 Hz */
+	timer_init ( 0, 2 );
+	timer_one ( 1, DURATION );
+
+	// s_status = 0;
+	// l_status = 1;
 }
 
 /* Called at interrupt level to blink both LEDs */
 void
-led_handler ( int junk )
+led_handler ( int who )
 {
-	led_toggle ();
-	status_toggle ();
+	printf ( "Ding: %d\n", who );
+
+	if ( who == 1 ) {
+	    if ( led_state == 0 )
+		led_off ();
+	    else
+		status_off ();
+	    return;
+	}
+
+	/* who == 0 */
+	if ( led_state == 0 ) {
+	    led_state = 1;
+	    status_on ();
+	} else {
+	    led_state = 0;
+	    led_on ();
+	}
+	timer_one ( 1, DURATION );
 }
 
 /* ================================================================ */

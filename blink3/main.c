@@ -241,7 +241,7 @@ main ( void )
 
 	printf ("\n" );
 	// uart_puts("Eat more fish!\n");
-	printf ("Interrupt EZ demo starting 10-2023\n");
+	printf ("blink 2 demo starting 10-2023\n");
 
 	/* A printf inside the interrupt shows:
 	 * GIC: sp = 57FFFFC0
@@ -252,7 +252,24 @@ main ( void )
 	// asm volatile ("add %0, sp, #0" : "=r"(cur_sp) );
 	// printf ( "SP = %08x\n", cur_sp );
 
+	gic_init ();
 	led_init ();
+
+	printf ( "Enabling IRQ\n" );
+	/* Allow above characters to clear */
+	ms_delay ( 100 );
+
+	enable_irq ();
+
+	ms_delay ( 500 );
+	gic_show_status ();
+
+	printf (" .. Spinning\n");
+
+	for ( ;; )
+	    asm volatile ( "wfe" );
+
+#ifdef notdef
 	// status_on ();
 	status_off ();
 	// led_off ();
@@ -260,9 +277,9 @@ main ( void )
 	ccnt_enable ( 0 );
 	ccnt_reset ();
 
+// #define TIMER	0
 	gic_init ();
 
-// #define TIMER	0
 #define TIMER	1
 	/* Start timer, rate in Hz */
 	timer_init ( TIMER, 2 );
@@ -271,22 +288,12 @@ main ( void )
 	timer_count = 0;
 	last_count = timer_count;
 
-	printf ( "Enabling IRQ\n" );
-
-	/* Allow above characters to clear */
-	ms_delay ( 100 );
-
-	enable_irq ();
-
-#ifdef notdef
 	gic_show_status ();
 	ms_delay ( 1000 );
 	ms_delay ( 1000 );
 	ms_delay ( 1000 );
 	gic_show_status ();
-#endif
 
-#ifdef notdef
 	// timer_watch ();
 	// gic_watch ();
 
@@ -301,12 +308,7 @@ main ( void )
 	}
 #endif
 
-	printf (" .. Spinning\n");
-
-	for ( ;; )
-	    asm volatile ( "wfe" );
-
-	// spin ();
+	spin ();
 }
 
 /* THE END */

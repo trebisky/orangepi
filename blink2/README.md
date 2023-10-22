@@ -14,12 +14,6 @@ the IRQ of unknown interrupts sources
 
 ***
 
-This demo works, but there is a lurking problem.
-I had erratic results with inter_ez, from which this
-is derived.  Then inter_ez mysteriously began to work.
-I copied that to this, then suddenly this one stopped
-working after I made some changes.  I copied it to "blink3"
-for further work, then restored this one to a working state.
-
-Beware.
-
+I had some erratic trouble with this, but I believe
+that is fixed now (in start.S).  I replaced the
+"irq" code from what I developed in blink3.

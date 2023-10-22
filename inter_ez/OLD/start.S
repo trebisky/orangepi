@@ -85,14 +85,33 @@ reset:
 irqX:
 	subs	pc,lr,#4
 
-/* This is what I coded up back in 2017, it sort of
- * seemed to work, but not always.
- * Looking at it, I cannot understand how it
- * worked at all, but we don't do this
- * anymore.
+#ifdef notdef
+/* This "works" - we get one interrupt, then
+ * disable interrupts altogether.
  */
+irqONE:
+	bl	red_on
+        mrs     r0, spsr
+        orr     r0, r0, #0x80
+        msr     spsr, r0
+	subs	pc,lr,#4
+
+/* Try something in 2023
+ * like "irqX" above we lock up in a hard
+ * interrupt loop since we don't clear the
+ * interrupt.
+ */
+irqY:
+	push	{r0, r1}
+	/* -- */
+	pop	{r0, r1}
+	subs	pc,lr,#4
+
+#endif
+
+/* This works, for a while ... */
 // irq_2017:
-irqXXX:
+irq:
 	stmfd	sp!,{r0-r12,lr}
 	dmb
 	bl	gic_handler
@@ -102,12 +121,6 @@ irqXXX:
 	// it also switches back from I mode to
 	// whatever mode preceded the interrupt.
 	subs	pc,lr,#4
-
-irq:
-	sub	lr, lr, #4
-	push	{r0-r12, lr}
-	bl	gic_handler
-	ldm	sp!,{r0-r12,pc}^
 
         .globl enable_irq
 enable_irq:
@@ -122,6 +135,15 @@ disable_irq:
         orr     r0, r0, #0x80
         msr     cpsr, r0
         bx      lr
+
+	.globl new_core2
+new_core2:
+	movw	sp, #0
+	movt	sp, #0x40ff
+/*	bl	bounce_core	*/
+
+	.globl new_core
+new_core:
 
 	.globl blink_asm
 blink_asm:

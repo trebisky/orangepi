@@ -1,5 +1,6 @@
-/* uart and gpio routines
- * Tom Trebisky  1-20-2017
+/* Driver for the H3 gpio
+ *
+ * Tom Trebisky  12-22-2016
  */
 
 #define GPIO_A    0
@@ -12,6 +13,8 @@
 #define GPIO_H    7
 #define GPIO_I    8
 #define GPIO_L    9	/* R_PIO */
+
+#include "protos.h"
 
 struct h3_gpio {
 	volatile unsigned long config[4];
@@ -102,6 +105,160 @@ gpio_input ( int gpio, int pin )
 	return (gp->data >> pin) & 1;
 }
 
+#define CHIP_H3
+
+void
+uart_gpio_init ( void )
+{
+#ifdef CHIP_H3
+	gpio_config ( GPIO_A, 4, H3_GPA_UART0 );
+	gpio_config ( GPIO_A, 5, H3_GPA_UART0 );
+	gpio_pull ( GPIO_A, 5, GPIO_PULL_UP );
+
+#else	/* H5 */
+	gpio_config ( GPIO_A, 4, SUN50I_H5_GPA_UART0 );
+	gpio_config ( GPIO_A, 5, SUN50I_H5_GPA_UART0 );
+	gpio_pull ( GPIO_A, 5, GPIO_PULL_UP );
+#endif
+}
+
+/* ===================================================== */
+/* ===================================================== */
+
+static void led_setup ( void );
+
+void
+led_init ( void )
+{
+	gpio_config ( GPIO_L, 10, GPIO_OUTPUT );
+	gpio_config ( GPIO_A, 15, GPIO_OUTPUT );
+
+	led_setup ();
+}
+
+/* Green LED */
+
+void
+led_on ( void )
+{
+	gpio_output ( GPIO_L, 10, 1 );
+}
+
+void
+led_off ( void )
+{
+	gpio_output ( GPIO_L, 10, 0 );
+}
+
+static int l_status = 0;
+
+void
+led_toggle ( void )
+{
+	if ( l_status ) {
+	    l_status = 0;
+	    led_off ();
+	} else {
+	    l_status = 1;
+	    led_on ();
+	}
+}
+
+/* Red LED */
+
+void
+status_on ( void )
+{
+	gpio_output ( GPIO_A, 15, 1 );
+}
+
+void
+status_off ( void )
+{
+	gpio_output ( GPIO_A, 15, 0 );
+}
+
+static int s_status = 0;
+
+void
+status_toggle ( void )
+{
+	if ( s_status ) {
+	    s_status = 0;
+	    status_off ();
+	} else {
+	    s_status = 1;
+	    status_on ();
+	}
+}
+
+/* This is the "heart" of the blink2 demo.
+ * The idea is to let timer 0 run continuously,
+ * and it is it's job to start each blink.
+ * timer 1 determines the duration of the blink
+ * turning it off when done.
+ * We blink the two LED in alternation.
+ *
+ * 10 ms is visible, but rather faint.
+ * 50 ms is just fine
+ */
+
+// #define DURATION	200
+// #define DURATION	50
+#define DURATION	100
+
+static int led_state = 0;
+
+static void
+led_setup ( void )
+{
+	// printf ( "LED setup called\n" );
+	led_on ();
+	status_off ();
+	led_state = 0;
+
+	/* 2 Hz */
+	timer_repeat ( 0, 2 );
+	timer_one ( 1, DURATION );
+
+	// s_status = 0;
+	// l_status = 1;
+}
+
+/* Called at interrupt level to blink both LEDs */
+void
+led_handler ( int who )
+{
+	// printf ( "Ding: %d\n", who );
+
+	if ( who == 1 ) {
+	    if ( led_state == 0 )
+		led_off ();
+	    else
+		status_off ();
+	    return;
+	}
+
+	/* who == 0 */
+	if ( led_state == 0 ) {
+	    led_state = 1;
+	    status_on ();
+	} else {
+	    led_state = 0;
+	    led_on ();
+	}
+
+	timer_one ( 1, DURATION );
+}
+
+/* ================================================================ */
+/* ================================================================ */
+/* ================================================================ */
+
+/* XXX XXX this CCM stuff doesn't belong here,
+ *  but here it is for now.
+ */
+
 /* These are registers in the CCM (clock control module)
  */
 #define CCM_GATE	((unsigned long *) 0x01c2006c)
@@ -125,176 +282,6 @@ uart_clock_init ( void )
 {
 	*CCM_GATE |= GATE_UART0;
 	*CCM_RESET4 |= RESET4_UART0;
-}
-
-#define CHIP_H3
-
-void
-uart_gpio_init ( void )
-{
-#ifdef CHIP_H3
-	gpio_config ( GPIO_A, 4, H3_GPA_UART0 );
-	gpio_config ( GPIO_A, 5, H3_GPA_UART0 );
-	gpio_pull ( GPIO_A, 5, GPIO_PULL_UP );
-
-#else	/* H5 */
-	gpio_config ( GPIO_A, 4, SUN50I_H5_GPA_UART0 );
-	gpio_config ( GPIO_A, 5, SUN50I_H5_GPA_UART0 );
-	gpio_pull ( GPIO_A, 5, GPIO_PULL_UP );
-#endif
-}
-
-void
-led_init ( void )
-{
-	gpio_config ( GPIO_L, 10, GPIO_OUTPUT );
-	gpio_config ( GPIO_A, 15, GPIO_OUTPUT );
-}
-
-void
-led_on ( void )
-{
-	gpio_output ( GPIO_L, 10, 1 );
-}
-
-void
-led_off ( void )
-{
-	gpio_output ( GPIO_L, 10, 0 );
-}
-
-void
-status_on ( void )
-{
-	gpio_output ( GPIO_A, 15, 1 );
-}
-
-void
-status_off ( void )
-{
-	gpio_output ( GPIO_A, 15, 0 );
-}
-
-#define BAUD_115200    (0xD) /* 24 * 1000 * 1000 / 16 / 115200 = 13 */
-
-#define NO_PARITY      (0)
-#define ONE_STOP_BIT   (0)
-#define DAT_LEN_8_BITS (3)
-#define LC_8_N_1       (NO_PARITY << 3 | ONE_STOP_BIT << 2 | DAT_LEN_8_BITS)
-
-struct h3_uart {
-	volatile unsigned int data;	/* 00 */
-	volatile unsigned int ier;	/* 04 */
-	volatile unsigned int iir;	/* 08 */
-	volatile unsigned int lcr;	/* 0c */
-	int _pad;
-	volatile unsigned int lsr;	/* 04 */
-};
-
-#define dlh	ier
-#define dll	data
-
-#define UART0_BASE	0x01C28000
-#define UART_BASE	((struct h3_uart *) UART0_BASE)
-
-#define TX_READY	0x40
-
-void
-uart_init ( void )
-{
-	struct h3_uart *up = UART_BASE;
-
-	uart_gpio_init();
-	uart_clock_init();
-
-	up->lcr = 0x80;		/* select dll dlh */
-
-	up->dlh = 0;
-	up->dll = BAUD_115200;
-
-	up->lcr = LC_8_N_1;
-}
-
-void
-uart_putc ( char c )
-{
-	struct h3_uart *up = UART_BASE;
-
-	while ( !(up->lsr & TX_READY) )
-	    ;
-	up->data = c;
-}
-
-void
-uart_puts ( char *s )
-{
-	while ( *s ) {
-	    if (*s == '\n')
-		uart_putc('\r');
-	    uart_putc(*s++);
-	}
-}
-
-/* ========================================= */
-
-/* A reasonable delay for blinking an LED */
-void
-delay_x ( void )
-{
-	volatile int count = 50000000;
-
-	while ( count-- )
-	    ;
-}
-
-/* Blink red status light */
-void
-blink_red ( void )
-{
-	for ( ;; ) {
-	    status_on ();
-	    delay_x ();
-
-	    status_off ();
-	    delay_x ();
-	}
-}
-
-void
-blink_green ( void )
-{
-	for ( ;; ) {
-	    led_off ();
-	    delay_x ();
-
-	    led_on ();
-	    delay_x ();
-	}
-}
-
-/* ========================================= */
-
-void
-delay_ms ( int msecs )
-{
-	volatile int count = 100000 * msecs;
-
-	while ( count-- )
-	    ;
-}
-
-#define SCTRL_A         0x0002
-
-void
-enable_unaligned ( void )
-{
-        int scr;
-
-        asm volatile("mrc p15, 0, %0, c1, c0, 0" : "=r" (scr) : : "cc");
-
-        scr &= ~SCTRL_A;
-
-        asm volatile("mcr p15, 0, %0, c1, c0, 0" : : "r" (scr) : "cc");
 }
 
 /* THE END */

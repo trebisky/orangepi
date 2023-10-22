@@ -51,7 +51,7 @@ And here are some new things for 2023
 
 1. cpu - check what speed the CPU runs at from U-Boot .. and more!
 2. blink2 - blink LEDs using timer and interrupts (works)
-2. blink3 - fancier way to blink LEDs using timer and interrupts
+3. blink3 - fancier way to blink LEDs using timer and interrupts
 
 It is important to point out that after doing a number of these little
 projects back in 2017, I shifted my attention to getting Kyu to run on
@@ -65,8 +65,8 @@ Now in 2023 I am returning to these with much greater knowledge.
 The demos below don't work and for one reason or other I have no intentions
 of doing any more work on them.  Revisited in 2023, but not worth investing more time in.
 
-3. cores1 - get a second CPU core to fire up (not working)
-3. cores2 - another attempt at a second core (not working)
-3. cores3 - a simple example, pruned back from Kyu sources (rarely works)
-3. cores4 - an extension of cores3 with additional experimenting (not working)
+3. xcores1 - get a second CPU core to fire up (not working)
+3. xcores2 - another attempt at a second core (not working)
+3. xcores3 - a simple example, pruned back from Kyu sources (rarely works)
+3. xcores4 - an extension of cores3 with additional experimenting (not working)
 

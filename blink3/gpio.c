@@ -198,10 +198,14 @@ status_toggle ( void )
  * timer 1 determines the duration of the blink
  * turning it off when done.
  * We blink the two LED in alternation.
+ *
+ * 10 ms is visible, but rather faint.
+ * 50 ms is just fine
  */
 
 // #define DURATION	200
-#define DURATION	50
+// #define DURATION	50
+#define DURATION	100
 
 static int led_state = 0;
 

@@ -12,20 +12,17 @@ LIBS = -L /usr/lib/gcc/arm-linux-gnueabi/$(GCCVERSION) -lgcc
 #ARM_ELF_FLAGS = -marm -fpic -Wall
 #ARM_ELF_FLAGS = -O2 -marm -fpic -Wall
 #ARM_ELF_FLAGS = -O2 -marm -Wall
-ARM_ELF_FLAGS = -marm -march=armv7-a
+ARM_ELF_FLAGS = -O2 -marm
 
-#ARM_ELF_FLAGS += -fno-common -fno-builtin -ffreestanding -nostdinc -fno-strict-aliasing
-#ARM_ELF_FLAGS += -mno-thumb-interwork -fno-stack-protector -fno-toplevel-reorder
-#ARM_ELF_FLAGS += -Wstrict-prototypes -Wno-format-nonliteral -Wno-format-security
-#ARM_ELF_FLAGS += -Wno-unused-function $(ABI)
-ARM_ELF_FLAGS += -fno-builtin -nostdinc -fno-omit-frame-pointer
-ARM_ELF_FLAGS += -Wno-implicit-function-declaration
-ARM_ELF_FLAGS += $(ABI)
+ARM_ELF_FLAGS += -fno-common -fno-builtin -ffreestanding -nostdinc -fno-strict-aliasing
+ARM_ELF_FLAGS += -mno-thumb-interwork -fno-stack-protector -fno-toplevel-reorder
+ARM_ELF_FLAGS += -Wstrict-prototypes -Wno-format-nonliteral -Wno-format-security
+ARM_ELF_FLAGS += -Wno-unused-function $(ABI)
 
 
-OBJS = start.o cores.o io.o
+OBJS = start.o main.o prf.o serial.o gpio.o timer.o gic.o
 
-TARGET = cores.bin
+TARGET = blink2.bin
 
 %.bin: %.elf
 	$(CROSS)objcopy -O binary $< $@
@@ -34,8 +31,7 @@ TARGET = cores.bin
 	$(CC) -c $(ARM_ELF_FLAGS) -nostdlib -c $<
 
 .S.o:
-	$(CC) -o $@ -c $<
-
+	        $(CC) -o $@ -c $<
 
 
 all: install
@@ -45,14 +41,14 @@ install: $(TARGET)
 
 DUMP = arm-linux-gnu-objdump -d
 
-dump:       cores.elf
-	$(DUMP) cores.elf >cores.dump
+dump:       blink2.elf
+	$(DUMP) blink2.elf >blink2.dump
 
 clean:
 	rm -rf *.bin *.elf *.o *.dump
 
 obj:
-	$(CROSS)objdump -h cores.o
+	$(CROSS)objdump -h blink2.o
 
 version:
 	$(CC) --version
@@ -60,5 +56,5 @@ version:
 #LINKER = -Wl,-N,--build-id=none
 LINKER = -Wl,--build-id=none -Wl,--no-warn-rwx-segments
 
-cores.elf: $(OBJS)
+blink2.elf: $(OBJS)
 	$(CC) -o $@ -nostdlib $(OBJS) -T basic.lds $(LINKER) $(LIBS)

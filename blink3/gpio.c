@@ -200,20 +200,21 @@ status_toggle ( void )
  * We blink the two LED in alternation.
  */
 
-#define DURATION	200
+// #define DURATION	200
+#define DURATION	50
 
 static int led_state = 0;
 
 static void
 led_setup ( void )
 {
-	printf ( "LED setup called\n" );
+	// printf ( "LED setup called\n" );
 	led_on ();
 	status_off ();
 	led_state = 0;
 
 	/* 2 Hz */
-	timer_init ( 0, 2 );
+	timer_repeat ( 0, 2 );
 	timer_one ( 1, DURATION );
 
 	// s_status = 0;
@@ -224,7 +225,7 @@ led_setup ( void )
 void
 led_handler ( int who )
 {
-	printf ( "Ding: %d\n", who );
+	// printf ( "Ding: %d\n", who );
 
 	if ( who == 1 ) {
 	    if ( led_state == 0 )
@@ -242,6 +243,7 @@ led_handler ( int who )
 	    led_state = 0;
 	    led_on ();
 	}
+
 	timer_one ( 1, DURATION );
 }
 

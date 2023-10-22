@@ -241,7 +241,7 @@ main ( void )
 
 	printf ("\n" );
 	// uart_puts("Eat more fish!\n");
-	printf ("blink 2 demo starting 10-2023\n");
+	printf ("blink 3 demo starting 10-2023\n");
 
 	/* A printf inside the interrupt shows:
 	 * GIC: sp = 57FFFFC0
@@ -253,16 +253,29 @@ main ( void )
 	// printf ( "SP = %08x\n", cur_sp );
 
 	gic_init ();
+	timer_init ();
 	led_init ();
+
+	/* ms_delay uses this */
+	ccnt_enable ( 0 );
+	ccnt_reset ();
 
 	printf ( "Enabling IRQ\n" );
 	/* Allow above characters to clear */
+	// printf ( "start delay\n" );
 	ms_delay ( 100 );
+	// printf ( "end delay\n" );
 
 	enable_irq ();
 
 	ms_delay ( 500 );
-	gic_show_status ();
+	ms_delay ( 500 );
+	ms_delay ( 500 );
+	ms_delay ( 500 );
+
+	// gic_show_status ();
+	// gic_show_status ();
+	// gic_show_status ();
 
 	printf (" .. Spinning\n");
 

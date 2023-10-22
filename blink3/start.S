@@ -111,7 +111,7 @@ irqY:
 
 /* This works, for a while ... */
 // irq_2017:
-irq:
+irqZ:
 	ldr sp, =0x58000000
 	stmfd	sp!,{r0-r12,lr}
 	dmb
@@ -122,6 +122,12 @@ irq:
 	// it also switches back from I mode to
 	// whatever mode preceded the interrupt.
 	subs	pc,lr,#4
+
+irq:
+	sub	lr, lr, #4
+	push	{r0-r12, lr}
+	bl	gic_handler
+	ldm	sp!,{r0-r12,pc}^
 
         .globl enable_irq
 enable_irq:

@@ -145,7 +145,7 @@ gic_handler ( void )
 
 	irq = cp->iack;
 
-	printf ( "GIC handler %d\n", irq );
+	// printf ( "GIC handler %d\n", irq );
 
 	//asm volatile ("add %0, sp, #0" : "=r"(cur_sp) );
 	//printf ( "GIC: sp = %08x\n", cur_sp );
@@ -157,11 +157,15 @@ gic_handler ( void )
 	    // return;
 	}
 
+#ifdef notdef
 	if ( first ) {
-	    printf ( "In gic_handler\n" );
+	    printf ( "In gic_handler (first)\n" );
 	    gic_show_status ();
 	    first = 0;
-	}
+	} else
+	    gic_show_status ();
+#endif
+
 	/* The above shows:
 	 * (handling IRQ_TIMER1 = 51)
 	 * indeed the "8" is bit 51.

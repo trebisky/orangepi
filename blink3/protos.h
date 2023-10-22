@@ -23,7 +23,8 @@ void serial_init ( void );
 void serial_puts ( char * );
 void serial_putc ( char );
 
-void timer_init ( int, int );
+void timer_init ( void );
+void timer_repeat ( int, int );
 void timer_one ( int, int );
 void timer_handler ( int );
 void uart_handler ( void );

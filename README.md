@@ -44,13 +44,13 @@ The "float" was just a curiosity exercise since I never try to
 do floating point in any of my bare metal projects.
 
 2. float - bare metal floating point with exception handling from Kyu
-3. inter_ez - set up the GIC so we get timer interrupts (works, but ...)
+3. inter_ez - set up the GIC so we get timer interrupts (works)
 1. inter_kyu - interrupts with timer and GIC with Kyu additions (works)
 
 And here are some new things for 2023
 
 1. cpu - check what speed the CPU runs at from U-Boot .. and more!
-2. blink2 - blink LEDs using timer and interrupts (works, but ...)
+2. blink2 - blink LEDs using timer and interrupts (works)
 2. blink3 - fancier way to blink LEDs using timer and interrupts
 
 It is important to point out that after doing a number of these little

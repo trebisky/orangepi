@@ -86,21 +86,29 @@ struct h3_timer {
 #define CLOCK_24M_MS	24000
 
 void
-timer_init ( int who, int hz )
+timer_init ( void )
+{
+	struct h3_timer *hp = TIMER_BASE;
+
+	hp->irq_ena = 0;
+	hp->regs[0].ctrl = 0;
+	hp->regs[1].ctrl = 0;
+}
+
+void
+timer_repeat ( int who, int hz )
 {
 	struct h3_timer *hp = TIMER_BASE;
 	struct tregs *tp;
-
-	printf ( "Timer init\n" );
 
 	tp = &hp->regs[who];
 
 	tp->ctrl = 0;	/* stop the timer */
 
 	if ( who == 0 ) {
-	    hp->irq_ena = ENA_T0;
+	    hp->irq_ena |= ENA_T0;
 	} else {
-	    hp->irq_ena = ENA_T1;
+	    hp->irq_ena |= ENA_T1;
 	}
 
 	// hp->t0_ival = 0x00100000;
@@ -129,16 +137,14 @@ timer_one ( int who, int delay )
 	struct h3_timer *hp = TIMER_BASE;
 	struct tregs *tp;
 
-	printf ( "Timer one\n" );
-
 	tp = &hp->regs[who];
 
 	tp->ctrl = 0;	/* stop the timer */
 
 	if ( who == 0 ) {
-	    hp->irq_ena = ENA_T0;
+	    hp->irq_ena |= ENA_T0;
 	} else {
-	    hp->irq_ena = ENA_T1;
+	    hp->irq_ena |= ENA_T1;
 	}
 
 	tp->ival = CLOCK_24M_MS * delay;
@@ -192,7 +198,7 @@ timer_ack ( int who )
 void
 timer_handler ( int who )
 {
-	printf ( "Timer handler\n" );
+	// printf ( "Timer handler\n" );
 	timer_ack ( who );
 	led_handler ( who );
 }

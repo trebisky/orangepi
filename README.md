@@ -32,6 +32,7 @@ Just C code from the very start.
 The first two link to address zero and rely on the compiler
 producing position independent code entirely.
 
+0. bootrom - on chip bootrom disassembly
 1. hello - just send output to the serial port, no assembly startup.
 1. blink - blink both on board LED's and write to serial port
 2. print - partition files and add a printf

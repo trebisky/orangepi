@@ -33,7 +33,7 @@ The first two link to address zero and rely on the compiler
 producing position independent code entirely.
 
 1. bootrom - on chip bootrom disassembly
-1. hello - just send output to the serial port, no assembly startup.
+1. hello - send output to the serial port, no assembly startup.
 1. blink - blink both on board LED's and write to serial port
 1. print - partition files and add a printf
 1. timer - get a timer running, add printf (not yet interrupting)
@@ -53,6 +53,7 @@ And here are some new things for 2023
 1. cpu - check what speed the CPU runs at from U-Boot .. and more!
 1. blink2 - blink LEDs using timer and interrupts (works)
 1. blink3 - fancier way to blink LEDs using timer and interrupts
+1. core - start a second core
 
 It is important to point out that after doing a number of these little
 projects back in 2017, I shifted my attention to getting Kyu to run on

@@ -6,10 +6,12 @@ INCS = -I.
 
 include Makefile.inc
 
-all: cpu
+all: cores
 
 COBJS =  start.o \
+    core_start.o \
     main.o \
+    core.o \
     ccm.o \
     gic.o \
     prf.o \
@@ -21,17 +23,17 @@ COBJS =  start.o \
     timer.o \
     serial.o
 
-cpu: $(COBJS)
-	$(LD) -g -T kyu.lds -e asm_startup -o cpu.elf $(COBJS) $(LIBS)
-	$(BIN) cpu.elf cpu.bin
-	$(DUMP) cpu.elf >cpu.dump
-	cp cpu.bin /var/lib/tftpboot/orange.bin
+cores: $(COBJS)
+	$(LD) -g -T kyu.lds -e asm_startup -o cores.elf $(COBJS) $(LIBS)
+	$(BIN) cores.elf cores.bin
+	$(DUMP) cores.elf >cores.dump
+	cp cores.bin /var/lib/tftpboot/orange.bin
 
 clean:
 	rm -f $(COBJS)
-	rm -f cpu.dump
-	rm -f cpu.elf
-	rm -f cpu.bin
+	rm -f cores.dump
+	rm -f cores.elf
+	rm -f cores.bin
 
 ver:
 	@echo $(GCCVERSION)

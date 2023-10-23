@@ -204,8 +204,8 @@ timer_ack ( int who )
 
 /* Called at interrupt level
  * "who" is 0 or 1
- * This is specifi to the fancy blink
- * being done in the blink2 demo,
+ * This was specific to the fancy blink
+ * being done in the blink3 demo,
  * see led_handler() for details.
  */
 void
@@ -213,6 +213,7 @@ timer_handler ( int who )
 {
 	// printf ( "Timer handler\n" );
 	timer_ack ( who );
+
 	led_handler ( who );
 }
 

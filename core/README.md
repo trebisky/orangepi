@@ -1,19 +1,16 @@
-This began by copying inter_ez on 10-19-2023
+core
 
-The idea is to blink LEDs using interrupts rather
-than CPU burning delay loops.
-And we will set up the timer to do the interrupts
-and perhaps play a bit with the timer as well.
+Start a second core.
 
-I added the ISR (status) info to the GIC structure
-and I do see pending interrupts there, both for
-the timer (for 51 when using timer 1) and for
-the uart.  This could be useful for identifying
-the IRQ of unknown interrupts sources
-(perhaps the GTIMER?).
+I began this by copying the cpu demo.  It has a somewhat fancy start.S that does
+initialize the BSS.  Then I added stuff from blink3, as follows:
 
-I use timer 0 to trigger the start of each pulse
-and timer 1 as a one shot to end the pulse.
+- proper irq code from start.S
+- gic.c
+- serial.c
+- timer.c
 
-Running both timers simultaneously pointed out some
-bugs in the timer driver and was a good thing.
+And I did a bunch of reorganization and cleanup, introducing led.c, ccm.c and so forth.
+Then I ensured it would do a simple LED blink driven by interrupts and that the
+whole mess would compile before I started work on starting a core.
+

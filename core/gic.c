@@ -18,6 +18,7 @@
 #define IRQ_TIMER0	50
 #define IRQ_TIMER1	51
 
+/* Useless */
 #define IRQ_R_TIMER0	65
 #define IRQ_R_TIMER1	66
 #define IRQ_R_TIMER2	74
@@ -184,21 +185,14 @@ gic_handler ( void )
 
 	if ( irq == IRQ_TIMER0 )
 	    timer_handler ( 0 );
-	if ( irq == IRQ_R_TIMER0 )
-	    timer_handler ( 0 );
 
 	if ( irq == IRQ_TIMER1 )
 	    timer_handler ( 1 );
-	if ( irq == IRQ_R_TIMER1 )
-	    timer_handler ( 1 );
 
-	if ( irq == IRQ_UART0 ) {
-	    printf ( "Uart interrupt\n" );
+	if ( irq == IRQ_UART0 )
 	    uart_handler ();
-	}
 
 	cp->eoi = irq;
-	// gic_unpend ( IRQ_TIMER0 );
 	gic_unpend ( irq );
 
 	// serial_putc ( '.' );
@@ -277,8 +271,7 @@ gic_init ( void )
 	cp->ctrl = 1;
 }
 
-extern volatile int timer_count;
-
+#ifdef notdef
 /* This is TIMER 0 */
 #define TIMER_MASK	0x40000
 
@@ -315,5 +308,6 @@ gic_watch ( void )
 	    gic_check ();
 	}
 }
+#endif
 
 /* THE END */

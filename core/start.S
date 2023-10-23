@@ -5,164 +5,190 @@
  * it under the terms of the GNU General Public License version 2 as
  * published by the Free Software Foundation. See README and COPYING for
  * more details.
+ *
+ * start.S
+ *
+ * Kyu project  5-13-2017  Tom Trebisky
+ *
+ * temporary catch-all for assembly language
+ *
+ * Amazingly enough, ARM by default is little-endian.
+ * It can switch, but watch out if you do!
  */
 
-#define PSR_IRQ_DIS     0x80
-#define PSR_FIQ_DIS     0x40
-#define PSR_INT_DIS     0xc0
+@ Apparently the at-sign is the ARM comment character.
+@ on the x86 you use the pound sign.
 
-	.globl _startup
-_startup:
-        /* disable interrupts */
-        mrs     r0, cpsr
-        orr     r0, r0, #PSR_INT_DIS
-        msr     cpsr, r0
+#define PSR_M_SUPER	0x13
+#define PSR_M_IRQ	0x12
+#define PSR_M_FIQ	0x11
 
-	/* Set up the interrupt stack */
-	;@//mov r0, #(PSR_IRQ_MODE|PSR_FIQ_DIS|PSR_IRQ_DIS)
-	mov r0,#0xD2
-	msr cpsr_c, r0
-	// ldr sp, =0x4fff0000
-	ldr sp, =0x58000000
+#define PSR_IRQ_DIS	0x80
+#define PSR_FIQ_DIS	0x40
+#define PSR_INT_DIS	0xc0
 
-	/* Set up the regular stack */
-	;@//mov r0, #(PSR_SVC_MODE|PSR_FIQ_DIS|PSR_IRQ_DIS)
-	mov r0,#0xD3
-	msr cpsr_c, r0
-	// ldr sp, =0x48ff0000
+#define PSR_DEFAULT	PSR_M_SUPER
+
+/* For the time being, this is the first thing linked
+ * and U-boot simply branches to a hard address.
+ *  0x80000000 on the BBB
+ *  0x40000000 on the Orange Pi
+ *
+ * As long as start.o is the first thing linked,
+ * we should be OK.
+ *
+ * For some reason the compiler was reordering routines
+ * compiled from main.c, this makes us immune to that.
+ */
+	.globl asm_startup
+asm_startup:
+
+	mrs	r0, cpsr		/* disable interrupts */
+	orr	r0, r0, #PSR_INT_DIS
+	msr	cpsr, r0
+
+	// movw	r0, #:lower16:vectors	/* set VBAR */
+	// movt	r0, #:upper16:vectors
+	ldr r0, =vectors
+	mcr 	p15, 0, r0, c12, c0, 0
+
+	// Set up our stack
 	ldr sp, =0x50000000
 
-	/* set up a stack pointer */
-	//movw	sp, #0
-	//movt	sp, #0x5000
-
-	/* set the vector base */
-        // movw    r0, #:lower16:vectors
-        // movt    r0, #:upper16:vectors
-	ldr r0, =vectors
-        mcr     p15, 0, r0, c12, c0, 0
-
+	bl	clear_bss
 	bl	main
 
-        .align  5
+xspin:	b	xspin
+	bx	lr
+
+clear_bss:
+	movw	r3, #:lower16:__bss_start__
+	movt	r3, #:upper16:__bss_start__
+	movw	r2, #:lower16:__bss_end__
+	movt	r2, #:upper16:__bss_end__
+	mov	r1, #0
+loop:	cmp	r3, r2
+	strcc	r1, [r3]
+	addcc	r3, r3, #4
+	bcc	loop
+	bx	lr
+
+/* on the BBB, the reset vector will never come here, it will start the
+ * firmware ROM code running, which will transfer to the SPL, which will
+ * transfer to U-boot, which will finally transfer to us.
+ *
+ * Someday we could eliminate U-boot, although I don't know why,
+ * and just let the SPL load us directly.
+ * At any rate, the reset vector here won't get any use on the BBB.
+ */
+
+/* Note on ".align".  On some processors (like the x86, not the arm)
+ * this is the multiple of bytes to align on.  On the ARM it is the
+ * power of 2.  So on the ARM:
+ *  .align 3 is like .align 8 on the x86.
+ *  .align 5 is aligning on 32 byte boundaries.
+ *  .align 7 is aligning on 128 byte boundaries.
+ *
+ * The manuals say the vector table needs to be 128 aligned.
+ */
+
+@	.align  5
+	.align  7
 .globl vectors
 vectors:
-        b       reset
-        ldr     pc, _undef
-        ldr     pc, _swi
-        ldr     pc, _iabt
-        ldr     pc, _dabt
-        ldr     pc, _unused
-        ldr     pc, _irq
-        ldr     pc, _fiq
+	b	reset
+	ldr	pc, _undef
+	ldr	pc, _swi
+	ldr	pc, _iabt
+	ldr	pc, _dabt
+	ldr	pc, _unused
+	ldr	pc, _irq
+	ldr	pc, _fiq
 
 
-        /* This branch table lets the handlers be anywhere */
-        .globl  _undef
-        .globl  _swi
-        .globl  _iabt
-        .globl  _dabt
-        .globl  _unused
-        .globl  _irq
-        .globl  _fiq
+	/* This branch table lets the handlers be anywhere */
+	.globl	_undef
+	.globl	_swi
+	.globl	_iabt
+	.globl	_dabt
+	.globl	_unused
+	.globl	_irq
+	.globl	_fiq
 
-_undef:         .word bogus
-_swi:           .word bogus
-_iabt:          .word bogus
-_dabt:          .word bogus
-_unused:        .word bogus
-_irq:           .word irq
-_fiq:           .word bogus
+_undef:		.word undefined_instruction
+_swi:		.word software_interrupt
+_iabt:		.word prefetch_abort
+_dabt:		.word data_abort
+_unused:	.word not_used
+_irq:		.word irq
+_fiq:		.word fiq
 
-bogus:
+/* XXX - spin and hang */
 reset:
-	bl	blink_asm
         b      reset
 
-/* This won't work because we never clear
- * the interrupt, we get into a hard IRQ loop.
- */
-irqX:
-	subs	pc,lr,#4
+	.align  5
+undefined_instruction:
+	ldr	r2, =0x52000000
+	add	sp, r2, #0
+	bl trap_ui
+	b  vspin
+software_interrupt:
+	ldr	r2, =0x52000000
+	add	sp, r2, #0
+	bl trap_si
+	b  vspin
+prefetch_abort:
+	ldr	r2, =0x52000000
+	add	sp, r2, #0
+	bl trap_pa
+	b  vspin
+data_abort:
+	ldr	r2, =0x52000000
+	add	sp, r2, #0
+	bl trap_da
+	b  vspin
+not_used:
+	ldr	r2, =0x52000000
+	add	sp, r2, #0
+	bl trap_nu
+	b  vspin
+fiq:
+	ldr	r2, =0x52000000
+	add	sp, r2, #0
+	bl trap_fiq
+	b  vspin
 
-/* This is what I coded up back in 2017, it sort of
- * seemed to work, but not always.
- * Looking at it, I cannot understand how it
- * worked at all, but we don't do this
- * anymore.
- */
-// irq_2017:
-irqXXX:
-	stmfd	sp!,{r0-r12,lr}
-	dmb
-	bl	gic_handler
-	dmb
-	ldmfd	sp!,{r0-r12,lr}
-	// The following instruction is magic
-	// it also switches back from I mode to
-	// whatever mode preceded the interrupt.
-	subs	pc,lr,#4
+#ifdef notdef
+irq:
+	ldr	r2, =0x52000000
+	add	sp, r2, #0
+	bl trap_irq
+	b  vspin
+#endif
 
 irq:
-	sub	lr, lr, #4
-	push	{r0-r12, lr}
-	bl	gic_handler
-	ldm	sp!,{r0-r12,pc}^
+        sub     lr, lr, #4
+        push    {r0-r12, lr}
+        bl      gic_handler
+        ldm     sp!,{r0-r12,pc}^
 
-        .globl enable_irq
-enable_irq:
-        mrs     r0, cpsr
-        bic     r0, r0, #0x80
-        msr     cpsr, r0
-        bx      lr
+vspin:	b	vspin
 
-        .globl disable_irq
-disable_irq:
-        mrs     r0, cpsr
-        orr     r0, r0, #0x80
-        msr     cpsr, r0
-        bx      lr
+@ Enable the VFP vector floating point unit
 
-	.globl blink_asm
-blink_asm:
-	movw	sp, #0
-	movt	sp, #0x4fff
-bloop:	bl	red_on
-	bl	delay_asm
-	bl	red_off
-	bl	delay_asm
-	b	bloop
+        .globl fp_enable
+fp_enable:
+        mrc     p15, 0, r0, c1, c0, 2
+        orr     r0, r0, #0x300000 @ single precision
+        orr     r0, r0, #0xC00000 @ double precision
+        mcr     p15, 0, r0, c1, c0, 2
+        isb
+        mov     r0, #0x40000000
+        fmxr    fpexc,r0
+        mov     pc, lr
 
-	.globl red_on
-red_on:
-	movw	r0, #0x0810
-	movt	r0, #0x01c2
-	ldr	r3,[r0]
-	orr	r3, r3, #0x00008000
-	str	r3,[r0]
-	bx	lr
-
-	.globl red_off
-red_off:
-	movw	r0, #0x0810
-	movt	r0, #0x01c2
-	ldr	r3,[r0]
-	bic	r3, r3, #0x00008000
-	str	r3,[r0]
-	bx	lr
-
-	.globl	delay_asm
-delay_asm:
-	movw	r3, #0x0000
-	movt	r3, #0x0400
-loop:	sub	r3, r3, #1
-	nop
-	nop
-	cmp	r3, #0
-	bne	loop
-	bx	lr
-
-	/* Avoid stupid linker warning */
+	@ avoid stupid linker warning
         .section        .note.GNU-stack,"",%progbits
 
 /* THE END */

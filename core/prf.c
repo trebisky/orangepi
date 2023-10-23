@@ -376,8 +376,7 @@ VSNPRINTF (char *abuf, unsigned int size, const char *fmt, va_list args)
 
 #define PRINTF_BUF_SIZE 128
 
-// int
-void
+int
 printf ( const char *fmt, ... )
 {
 	char buf[PRINTF_BUF_SIZE];
@@ -389,8 +388,7 @@ printf ( const char *fmt, ... )
 	va_end ( args );
 
 	serial_puts ( buf );
-
-	// return rv;
+	return rv;
 }
 
 /* THE END */

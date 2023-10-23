@@ -14,8 +14,6 @@
 #define GPIO_I    8
 #define GPIO_L    9	/* R_PIO */
 
-#include "protos.h"
-
 struct h3_gpio {
 	volatile unsigned long config[4];
 	volatile unsigned long data;
@@ -122,166 +120,46 @@ uart_gpio_init ( void )
 #endif
 }
 
-/* ===================================================== */
-/* ===================================================== */
-
-static void led_setup ( void );
-
 void
 led_init ( void )
 {
 	gpio_config ( GPIO_L, 10, GPIO_OUTPUT );
 	gpio_config ( GPIO_A, 15, GPIO_OUTPUT );
-
-	led_setup ();
 }
 
 /* Green LED */
 
 void
-led_on ( void )
+green_on ( void )
 {
 	gpio_output ( GPIO_L, 10, 1 );
 }
 
 void
-led_off ( void )
+green_off ( void )
 {
 	gpio_output ( GPIO_L, 10, 0 );
-}
-
-static int l_status = 0;
-
-void
-led_toggle ( void )
-{
-	if ( l_status ) {
-	    l_status = 0;
-	    led_off ();
-	} else {
-	    l_status = 1;
-	    led_on ();
-	}
 }
 
 /* Red LED */
 
 void
-status_on ( void )
+red_on ( void )
 {
 	gpio_output ( GPIO_A, 15, 1 );
 }
 
 void
-status_off ( void )
+red_off ( void )
 {
 	gpio_output ( GPIO_A, 15, 0 );
 }
 
-static int s_status = 0;
-
 void
-status_toggle ( void )
+gpio_init ( void )
 {
-	if ( s_status ) {
-	    s_status = 0;
-	    status_off ();
-	} else {
-	    s_status = 1;
-	    status_on ();
-	}
-}
-
-/* This is the "heart" of the blink2 demo.
- * The idea is to let timer 0 run continuously,
- * and it is it's job to start each blink.
- * timer 1 determines the duration of the blink
- * turning it off when done.
- * We blink the two LED in alternation.
- *
- * 10 ms is visible, but rather faint.
- * 50 ms is just fine
- */
-
-// #define DURATION	200
-// #define DURATION	50
-#define DURATION	100
-
-static int led_state = 0;
-
-static void
-led_setup ( void )
-{
-	// printf ( "LED setup called\n" );
-	led_on ();
-	status_off ();
-	led_state = 0;
-
-	/* 2 Hz */
-	timer_repeat ( 0, 2 );
-	timer_one ( 1, DURATION );
-
-	// s_status = 0;
-	// l_status = 1;
-}
-
-/* Called at interrupt level to blink both LEDs */
-void
-led_handler ( int who )
-{
-	// printf ( "Ding: %d\n", who );
-
-	if ( who == 1 ) {
-	    if ( led_state == 0 )
-		led_off ();
-	    else
-		status_off ();
-	    return;
-	}
-
-	/* who == 0 */
-	if ( led_state == 0 ) {
-	    led_state = 1;
-	    status_on ();
-	} else {
-	    led_state = 0;
-	    led_on ();
-	}
-
-	timer_one ( 1, DURATION );
-}
-
-/* ================================================================ */
-/* ================================================================ */
-/* ================================================================ */
-
-/* XXX XXX this CCM stuff doesn't belong here,
- *  but here it is for now.
- */
-
-/* These are registers in the CCM (clock control module)
- */
-#define CCM_GATE	((unsigned long *) 0x01c2006c)
-#define CCM_RESET4	((unsigned long *) 0x01c202d8)
-
-#define GATE_UART0	0x0001000
-#define GATE_UART1	0x0002000
-#define GATE_UART2	0x0004000
-#define GATE_UART3	0x0008000
-
-#define RESET4_UART0	0x0001000
-#define RESET4_UART1	0x0002000
-#define RESET4_UART2	0x0004000
-#define RESET4_UART3	0x0008000
-
-/* This is probably set up for us by U-boot,
- * true bare metal would need this.
- */
-void
-uart_clock_init ( void )
-{
-	*CCM_GATE |= GATE_UART0;
-	*CCM_RESET4 |= RESET4_UART0;
+	led_init ();
+	// uart_gpio_init ();
 }
 
 /* THE END */

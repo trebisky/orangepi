@@ -1,60 +1,44 @@
-# makefile
-CROSS = arm-linux-gnu-
+# Makefile for bare metal projects on the Orange Pi H3
+#
+# Tom Trebisky  10-17-2023
 
-CC = $(CROSS)gcc
+INCS = -I.
 
-GCCVERSION = `$(CC) -dumpversion`
+include Makefile.inc
 
-ABI = -isystem /usr/lib/gcc/arm-linux-gnueabi/$(GCCVERSION)/include
-LIBS = -L /usr/lib/gcc/arm-linux-gnueabi/$(GCCVERSION) -lgcc
+all: cpu
 
-#ARM_ELF_FLAGS = -Os -marm -fpic -Wall
-#ARM_ELF_FLAGS = -marm -fpic -Wall
-#ARM_ELF_FLAGS = -O2 -marm -fpic -Wall
-#ARM_ELF_FLAGS = -O2 -marm -Wall
-ARM_ELF_FLAGS = -O2 -marm
+COBJS =  start.o \
+    main.o \
+    ccm.o \
+    gic.o \
+    prf.o \
+    traps.o \
+    ccnt.o \
+    pll.o \
+    gpio.o \
+    led.o \
+    timer.o \
+    serial.o
 
-ARM_ELF_FLAGS += -fno-common -fno-builtin -ffreestanding -nostdinc -fno-strict-aliasing
-ARM_ELF_FLAGS += -mno-thumb-interwork -fno-stack-protector -fno-toplevel-reorder
-ARM_ELF_FLAGS += -Wstrict-prototypes -Wno-format-nonliteral -Wno-format-security
-ARM_ELF_FLAGS += -Wno-unused-function $(ABI)
-
-
-OBJS = start.o main.o prf.o serial.o gpio.o timer.o gic.o
-
-TARGET = blink2.bin
-
-%.bin: %.elf
-	$(CROSS)objcopy -O binary $< $@
-
-%.o: %.c
-	$(CC) -c $(ARM_ELF_FLAGS) -nostdlib -c $<
-
-.S.o:
-	        $(CC) -o $@ -c $<
-
-
-all: install
-
-install: $(TARGET)
-	cp $(TARGET) /var/lib/tftpboot/orange.bin
-
-DUMP = arm-linux-gnu-objdump -d
-
-dump:       blink2.elf
-	$(DUMP) blink2.elf >blink2.dump
+cpu: $(COBJS)
+	$(LD) -g -T kyu.lds -e asm_startup -o cpu.elf $(COBJS) $(LIBS)
+	$(BIN) cpu.elf cpu.bin
+	$(DUMP) cpu.elf >cpu.dump
+	cp cpu.bin /var/lib/tftpboot/orange.bin
 
 clean:
-	rm -rf *.bin *.elf *.o *.dump
+	rm -f $(COBJS)
+	rm -f cpu.dump
+	rm -f cpu.elf
+	rm -f cpu.bin
 
-obj:
-	$(CROSS)objdump -h blink2.o
-
-version:
+ver:
+	@echo $(GCCVERSION)
+	@echo $(ABI)
 	$(CC) --version
 
-#LINKER = -Wl,-N,--build-id=none
-LINKER = -Wl,--build-id=none -Wl,--no-warn-rwx-segments
+term:
+	picocom -b 115200 /dev/ttyUSB0
 
-blink2.elf: $(OBJS)
-	$(CC) -o $@ -nostdlib $(OBJS) -T basic.lds $(LINKER) $(LIBS)
+# THE END

@@ -1,327 +1,149 @@
-/* The game here is to get interrupts happening
- *   on the Orange Pi PC.
+/*
+ * Copyright (C) 2016  Tom Trebisky  <tom@mmto.org>
  *
- * This is mostly about writing a driver for the ARM GIC device.
- * The interrupt source in question is TIMER 0, which
- * I have running to interrupt at 10 Hz.
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 2 as
+ * published by the Free Software Foundation. See README and COPYING for
+ * more details.
  *
- * There is some cruft hanging around from the original
- *  timer experiments.
+ * main.c for the Orange Pi PC and PC Plus
  *
- * Tom Trebisky  1-4-2017
+ * The game here is to discover how U-Boot passes us the CPU.
+ * What speed is the clock running?
+ * is the cache and/or MMU enabled.
+ *
+ * Tom Trebisky  5/13/2017 
+ * Tom Trebisky  10/17/2023
  */
 
 #include "protos.h"
 
-void main ( void );
+typedef unsigned long long u64;
 
-/* Something in the eabi library for gcc wants this */
-int
-raise (int signum)
-{
-	return 0;
-}
+static void show_stack ( void );
+static void stopwatch ( void );
+void tt_dump ( int, int );
 
-/* --------------------------------------- */
+#define get_SP(x)       asm volatile ("add %0, sp, #0\n" :"=r" ( x ) )
 
-#define MS_300	50000000;
+#define get_CPSR(val)   asm volatile ( "mrs %0, cpsr" : "=r" ( val ) )
+#define set_CPSR(val)   asm volatile ( "msr cpsr, %0" : : "r" ( val ) )
 
-/* A reasonable delay for blinking an LED.
- * This began as a wild guess, but
- * in fact yields a 300ms delay
- * as calibrated below.
+#define get_SCTLR(val)  asm volatile ( "mrc p15, 0, %0, c1, c0, 0" : "=r" ( val ) )
+#define set_SCTLR(val)  asm volatile ( "mcr p15, 0, %0, c1, c0, 0" : : "r" ( val ) )
+
+#define get_ACTLR(val)  asm volatile ( "mrc p15, 0, %0, c1, c0, 1" : "=r" ( val ) )
+#define set_ACTLR(val)  asm volatile ( "mcr p15, 0, %0, c1, c0, 1" : : "r" ( val ) )
+
+#define get_TTBR0(val)  asm volatile ( "mrc p15, 0, %0, c2, c0, 0" : "=r" ( val ) )
+#define set_TTBR0(val)  asm volatile ( "mcr p15, 0, %0, c2, c0, 0" : : "r" ( val ) )
+
+// MRRC p15, 0, <Rt>, <Rt2>, c2 ; Read 64-bit TTBR0 into Rt (low word) and Rt2 (high word)
+// asm volatile("mrrc p15, 0, %0, %1, c14" : "=r" (nowl), "=r" (nowu));
+// val1 is low, val2 is high
+#define get_XTTBR0(val1, val2)  asm volatile ( "mrrc p15, 0, %0, %1, c2" : "=r" ( val1 ), "=r" ( val2 ) )
+
+#define get_TTBR1(val)  asm volatile ( "mrc p15, 0, %0, c2, c0, 1" : "=r" ( val ) )
+#define set_TTBR1(val)  asm volatile ( "mcr p15, 0, %0, c2, c0, 1" : : "r" ( val ) )
+
+#define get_TTBCR(val)  asm volatile ( "mrc p15, 0, %0, c2, c0, 2" : "=r" ( val ) )
+#define set_TTBCR(val)  asm volatile ( "mcr p15, 0, %0, c2, c0, 2" : : "r" ( val ) )
+
+#define set_DACR(val)   asm volatile ( "mcr p15, 0, %0, c3, c0, 0" : : "r" ( val ) )
+#define get_DACR(val)   asm volatile ( "mrc p15, 0, %0, c3, c0, 0" : "=r" ( val ) )
+
+#define get_VBAR(val)   asm volatile ( "mrc p15, 0, %0, c12, c0, 0" : "=r" ( val ) )
+#define set_VBAR(val)   asm volatile ( "mcr p15, 0, %0, c12, c0, 0" : : "r" ( val ) )
+
+// The ID_PFR0 and ID_PFR1 registers.
+#define get_PFR0(val)   asm volatile ( "mrc p15, 0, %0, c0, c1, 0" : "=r" ( val ) )
+#define get_PFR1(val)   asm volatile ( "mrc p15, 0, %0, c0, c1, 1" : "=r" ( val ) )
+
+// #define INT_lock        
+#define int_DISABLE        \
+        asm volatile (  "mrs     r0, cpsr; \
+                        orr     r0, r0, #0xc0; \
+                        msr     cpsr, r0" ::: "r0" )
+
+// #define INT_unlock     
+#define int_ENABLE      \
+        asm volatile (  "mrs     r0, cpsr; \
+                        bic     r0, r0, #0xc0; \
+                        msr     cpsr, r0" ::: "r0" )
+
+
+/* The show starts here.
  */
-void
-delay_x ( void )
-{
-	volatile int count = MS_300;
-
-	while ( count-- )
-	    ;
-}
-
-#define MS_1	166667
-
-void
-delay_ms ( int ms )
-{
-	volatile int count = ms * MS_1;
-
-	while ( count-- )
-	    ;
-}
-
-void
-blink ( void )
-{
-	led_init ();
-
-	for ( ;; ) {
-	    led_off ();
-	    status_on ();
-	    // uart_puts("OFF\n");
-	    delay_x ();
-	    led_on ();
-	    status_off ();
-	    // uart_puts("ON\n");
-	    delay_x ();
-	}
-
-}
-
-#define ROM_START       ((unsigned long *) 0x01f01da4)
-
-void
-show_stuff ( void )
-{
-	unsigned long id;
-	unsigned long sp;
-
-	id = 1<<31;
-	printf ( "test: %08x\n", id );
-	id = 0xdeadbeef;
-	printf ( "test: %08x\n", id );
-
-        asm volatile ("add %0, sp, #0" : "=r" (sp));
-	printf ( "sp: %08x\n", sp );
-
-        asm volatile ("mrc p15, 0, %0, c0, c0, 0" : "=r" (id));
-
-	printf ( "ARM id register: %08x\n", id );
-
-	id = *ROM_START;
-	printf ( "rom before: %08x\n", id );
-
-	*ROM_START = (unsigned long) blink;
-
-	id = *ROM_START;
-	printf ( "rom after: %08x\n", id );
-}
-
-#define PMCR_ENABLE     0x01    /* enable all counters */
-#define PMCR_EV_RESET   0x02    /* reset all event counters */
-#define PMCR_CC_RESET   0x04    /* reset CCNT */
-#define PMCR_CC_DIV     0x08    /* divide CCNT by 64 */
-#define PMCR_EXPORT     0x10    /* export events */
-#define PMCR_CC_DISABLE 0x20    /* disable CCNT in non-invasive regions */
-
-/* There are 4 counters besides the CCNT (we ignore them at present) */
-#define CENA_CCNT       0x80000000
-#define CENA_CTR3       0x00000008
-#define CENA_CTR2       0x00000004
-#define CENA_CTR1       0x00000002
-#define CENA_CTR0       0x00000001
-
-void
-ccnt_enable ( int div64 )
-{
-        int val;
-
-        // val = get_pmcr ();
-	asm volatile ("mrc p15, 0, %0, c9, c12, 0" : "=r"(val) );
-	// printf ( " PMCR = %08x\n", val );
-        val |= PMCR_ENABLE;
-        if ( div64 )
-            val |= PMCR_CC_DIV;
-        // set_pmcr ( val );
-	asm volatile ("mcr p15, 0, %0, c9, c12, 0" : : "r"(val) );
-
-	asm volatile ("mrc p15, 0, %0, c9, c12, 0" : "=r"(val) );
-	// printf ( " PMCR = %08x\n", val );
-
-        // set_cena ( CENA_CCNT );
-	val = CENA_CCNT;
-	asm volatile ("mcr p15, 0, %0, c9, c12, 1" : : "r"(val) );
-
-	asm volatile ("mrc p15, 0, %0, c9, c12, 1" : "=r"(val) );
-	// printf ( " CENA = %08x\n", val );
-}
-
-
-void
-ccnt_reset ( void )
-{
-	int val;
-
-        // set_pmcr ( get_pmcr() | PMCR_CC_RESET );
-	asm volatile ("mrc p15, 0, %0, c9, c12, 0" : "=r"(val) );
-	val |= PMCR_CC_RESET;
-	asm volatile ("mcr p15, 0, %0, c9, c12, 0" : : "r"(val) );
-}
-
-static inline int 
-ccnt_read ( void )
-{
-	int count;
-
-	asm volatile ("mrc p15, 0, %0, c9, c13, 0" : "=r"(count) );
-	return count;
-}
-
-#define GIG	1000000000
-#define MEG	1000000
-
-void
-gig_delayX ( void )
-{
-	int count;
-
-	ccnt_reset ();
-
-	for ( ;; ) {
-	    asm volatile ("mrc p15, 0, %0, c9, c13, 0" : "=r"(count) );
-	    if ( count > GIG )
-		break;
-	}
-}
-
-/* OK for up to 16 seconds at 1 Ghz clock */
-void
-gig_delay ( int secs )
-{
-	int count;
-	int limit = secs * GIG;
-
-	ccnt_reset ();
-
-	for ( ;; ) {
-	    asm volatile ("mrc p15, 0, %0, c9, c13, 0" : "=r"(count) );
-	    if ( count > limit )
-		break;
-	}
-}
-
-void
-ms_delay ( int ms )
-{
-	int count;
-	int limit = ms * MEG;
-
-	ccnt_reset ();
-
-	for ( ;; ) {
-	    asm volatile ("mrc p15, 0, %0, c9, c13, 0" : "=r"(count) );
-	    if ( count > limit )
-		break;
-	}
-}
-
-static inline void
-spin ( void )
-{
-	for ( ;; )
-	    ;
-}
-
-/* --------------------------------------- */
-
-#ifdef notdef
-void timer_init ( int );
-void timer_watch ( void );
-void gic_watch ( void );
-
-void gic_init ( void );
-#endif
-
-extern volatile int timer_count;
-
 void
 main ( void )
 {
-	int count1;
-	int count2;
-	int tick = 0;
 	int val;
-	int msecs;
-	int i;
-	int last_count;
-	int cur_sp;
+	int val1, val2;
+	// u64 val64;
 
-	serial_init();
+	gpio_init ();
+	serial_init ( 115200 );
 
-	printf ("\n" );
-	// uart_puts("Eat more fish!\n");
-	printf ("blink 3 demo starting 10-2023\n");
-
-	/* A printf inside the interrupt shows:
-	 * GIC: sp = 57FFFFC0
-	 * This shows:
-	 * SP = 4FFFFFF0
-	 */
-
-	// asm volatile ("add %0, sp, #0" : "=r"(cur_sp) );
-	// printf ( "SP = %08x\n", cur_sp );
+	printf ( "Core demo starting 10-22-2023\n" );
 
 	gic_init ();
-	timer_init ();
-	led_init ();
+	blink_setup ();
 
-	/* ms_delay uses this */
+	// show_stack ();
+
 	ccnt_enable ( 0 );
-	ccnt_reset ();
 
-	printf ( "Enabling IRQ\n" );
-	/* Allow above characters to clear */
-	// printf ( "start delay\n" );
-	ms_delay ( 100 );
-	// printf ( "end delay\n" );
-
-	enable_irq ();
-
-	ms_delay ( 500 );
-	ms_delay ( 500 );
-	ms_delay ( 500 );
-	ms_delay ( 500 );
-
-	// gic_show_status ();
-	// gic_show_status ();
-	// gic_show_status ();
-
-	printf (" .. Spinning\n");
-
-	for ( ;; )
-	    asm volatile ( "wfe" );
+	int_ENABLE;
 
 #ifdef notdef
-	// status_on ();
-	status_off ();
-	// led_off ();
+	// printf ( "u64 is %d bytes\n", sizeof(u64) );
 
-	ccnt_enable ( 0 );
-	ccnt_reset ();
+	val = get_cpu_clock ();
+	printf ( "CPU clock found set to: %d\n", val );
 
-// #define TIMER	0
-	gic_init ();
+	get_CPSR ( val );
+	printf ( "CPSR: %08x\n", val );
 
-#define TIMER	1
-	/* Start timer, rate in Hz */
-	timer_init ( TIMER, 2 );
-	// timer_init ( TIMER, 10 );
+	get_SCTLR ( val );
+	printf ( "SCTLR: %08x\n", val );
 
-	timer_count = 0;
-	last_count = timer_count;
+	get_ACTLR ( val );
+	printf ( "ACTLR: %08x\n", val );
 
-	gic_show_status ();
-	ms_delay ( 1000 );
-	ms_delay ( 1000 );
-	ms_delay ( 1000 );
-	gic_show_status ();
+	get_TTBCR ( val );
+	printf ( "TTBCR: %08x\n", val );
 
-	// timer_watch ();
-	// gic_watch ();
+	get_TTBR0 ( val );
+	printf ( "TTBR0: %08x\n", val );
 
-	/* I was printing the stack to check for corruption,
-	 * but never saw anything out of the ordinary
-	 */
-	for ( ;; ) {
-	    ms_delay ( 500 );
-	    // asm volatile ("add %0, sp, #0" : "=r"(cur_sp) );
-	    // printf ( "Count: %5d sp = %08x\n", timer_count, cur_sp );
-	    printf ( "Interrupt count: %5d\n", timer_count );
-	}
+	/* val2 is high, val1 is low */
+	get_XTTBR0 ( val1, val2 );
+	printf ( "TTBR0: %08x %08x\n", val2, val1 );
+
+	/* Random junk every power cycle */
+	// get_TTBR1 ( val );
+	// printf ( "TTBR1: %08x\n", val );
+
+	get_PFR0 ( val );
+	printf ( "PFR0: %08x\n", val );
+	get_PFR1 ( val );
+	printf ( "PFR1: %08x\n", val );
+
+	get_TTBR0 ( val );
+	tt_dump ( val, 5 );
+
+	tt_dump ( 0x7fff0000, 4 );
+	tt_dump ( 0x7fff1000, 4 );
+	tt_dump ( 0x7fff2000, 4 );
+	tt_dump ( 0x7fff3000, 4 );
+
+	printf ( "Main blinks ...\n" );
+	// blink ();
 #endif
 
-	spin ();
+	printf ( "Main spins on WFE\n" );
+	for ( ;; )
+	    asm volatile ( "wfe" );
 }
 
 /* THE END */
